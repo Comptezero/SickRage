@@ -1,3 +1,4 @@
+# coding=utf-8
 # This file is part of SickRage.
 #
 # URL: https://sickrage.github.io
@@ -10,11 +11,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 from sickrage.helper.encoding import ss
 
@@ -44,7 +45,12 @@ def ex(e):
                 if not message:
                     message = fixed_arg
                 else:
-                    message = '%s : %s' % (message, fixed_arg)
+                    try:
+                        message = u'{} : {}'.format(message, fixed_arg)
+                    except UnicodeError:
+                        message = u'{} : {}'.format(
+                            unicode(message, errors='replace'),
+                            unicode(fixed_arg, errors='replace'))
 
     return message
 

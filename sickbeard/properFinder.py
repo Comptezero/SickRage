@@ -1,3 +1,4 @@
+# coding=utf-8
 # Author: Nic Wolfe <nic@wolfeden.ca>
 # URL: https://sickrage.github.io
 # Git: https://github.com/SickRage/SickRage.git
@@ -11,11 +12,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import re
 import time
@@ -23,7 +24,9 @@ import datetime
 import operator
 import threading
 import traceback
-
+import errno
+from socket import timeout as SocketTimeout
+from requests import exceptions as requests_exceptions
 import sickbeard
 
 from sickbeard import db
@@ -36,11 +39,11 @@ from sickrage.show.History import History
 from sickbeard.name_parser.parser import NameParser, InvalidNameException, InvalidShowException
 
 
-class ProperFinder:
+class ProperFinder(object):  # pylint: disable=too-few-public-methods
     def __init__(self):
         self.amActive = False
 
-    def run(self, force=False):
+    def run(self, force=False):  # pylint: disable=unused-argument
         """
         Start looking for new propers
 
@@ -69,7 +72,7 @@ class ProperFinder:
 
         self.amActive = False
 
-    def _getProperList(self):
+    def _getProperList(self):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         """
         Walk providers for propers
         """
@@ -79,30 +82,48 @@ class ProperFinder:
 
         # for each provider get a list of the
         origThreadName = threading.currentThread().name
-        providers = [x for x in sickbeard.providers.sortedProviderList(sickbeard.RANDOMIZE_PROVIDERS) if x.isActive()]
+        providers = [x for x in sickbeard.providers.sortedProviderList(sickbeard.RANDOMIZE_PROVIDERS) if x.is_active()]
         for curProvider in providers:
             threading.currentThread().name = origThreadName + " :: [" + curProvider.name + "]"
 
             logger.log(u"Searching for any new PROPER releases from " + curProvider.name)
 
             try:
-                curPropers = curProvider.findPropers(search_date)
-            except AuthException, e:
+                curPropers = curProvider.find_propers(search_date)
+            except AuthException as e:
                 logger.log(u"Authentication error: " + ex(e), logger.DEBUG)
                 continue
-            except Exception, e:
-                logger.log(u"Error while searching " + curProvider.name + ", skipping: " + ex(e), logger.DEBUG)
-                logger.log(traceback.format_exc(), logger.DEBUG)
+            except (SocketTimeout, TypeError) as e:
+                logger.log(u"Connection timed out (sockets) while searching propers in " + curProvider.name + ", skipping: " + ex(e), logger.DEBUG)
+                continue
+            except (requests_exceptions.HTTPError, requests_exceptions.TooManyRedirects) as e:
+                logger.log(u"HTTP error while searching propers in " + curProvider.name + ", skipping: " + ex(e), logger.DEBUG)
+                continue
+            except requests_exceptions.ConnectionError as e:
+                logger.log(u"Connection error while searching propers in " + curProvider.name + ", skipping: " + ex(e), logger.DEBUG)
+                continue
+            except requests_exceptions.Timeout as e:
+                logger.log(u"Connection timed out while searching propers in " + curProvider.name + ", skipping: " + ex(e), logger.DEBUG)
+                continue
+            except requests_exceptions.ContentDecodingError:
+                logger.log(u"Content-Encoding was gzip, but content was not compressed while searching propers in " + curProvider.name + ", skipping: " + ex(e), logger.DEBUG)
+                continue
+            except Exception as e:
+                if hasattr(e, 'errno') and e.errno == errno.ECONNRESET:
+                    logger.log(u"Connection reseted by peer accessing {}".format(curProvider.name), logger.DEBUG)
+                else:
+                    logger.log(u"Unknown exception while searching propers in " + curProvider.name + ", skipping: " + ex(e), logger.ERROR)
+                    logger.log(traceback.format_exc(), logger.DEBUG)
                 continue
 
             # if they haven't been added by a different provider than add the proper to the list
             for x in curPropers:
                 if not re.search(r'(^|[\. _-])(proper|repack)([\. _-]|$)', x.name, re.I):
-                    logger.log(u'findPropers returned a non-proper, we have caught and skipped it.', logger.DEBUG)
+                    logger.log(u'find_propers returned a non-proper, we have caught and skipped it.', logger.DEBUG)
                     continue
 
                 name = self._genericName(x.name)
-                if not name in propers:
+                if name not in propers:
                     logger.log(u"Found new proper: " + x.name, logger.DEBUG)
                     x.provider = curProvider
                     propers[name] = x
@@ -116,13 +137,9 @@ class ProperFinder:
         for curProper in sortedPropers:
 
             try:
-                myParser = NameParser(False)
-                parse_result = myParser.parse(curProper.name)
-            except InvalidNameException:
-                logger.log(u"Unable to parse the filename " + curProper.name + " into a valid episode", logger.DEBUG)
-                continue
-            except InvalidShowException:
-                logger.log(u"Unable to parse the filename " + curProper.name + " into a valid show", logger.DEBUG)
+                parse_result = NameParser(False).parse(curProper.name)
+            except (InvalidNameException, InvalidShowException) as error:
+                logger.log(u"{}".format(error), logger.DEBUG)
                 continue
 
             if not parse_result.series_name:
@@ -167,28 +184,28 @@ class ProperFinder:
                     continue
 
             # check if we actually want this proper (if it's the right quality)
-            myDB = db.DBConnection()
-            sqlResults = myDB.select("SELECT status FROM tv_episodes WHERE showid = ? AND season = ? AND episode = ?",
-                                     [bestResult.indexerid, bestResult.season, bestResult.episode])
-            if not sqlResults:
+            main_db_con = db.DBConnection()
+            sql_results = main_db_con.select("SELECT status FROM tv_episodes WHERE showid = ? AND season = ? AND episode = ?",
+                                             [bestResult.indexerid, bestResult.season, bestResult.episode])
+            if not sql_results:
                 continue
 
             # only keep the proper if we have already retrieved the same quality ep (don't get better/worse ones)
-            oldStatus, oldQuality = Quality.splitCompositeStatus(int(sqlResults[0]["status"]))
+            oldStatus, oldQuality = Quality.splitCompositeStatus(int(sql_results[0]["status"]))
             if oldStatus not in (DOWNLOADED, SNATCHED) or oldQuality != bestResult.quality:
                 continue
 
             # check if we actually want this proper (if it's the right release group and a higher version)
             if bestResult.show.is_anime:
-                myDB = db.DBConnection()
-                sqlResults = myDB.select(
+                main_db_con = db.DBConnection()
+                sql_results = main_db_con.select(
                     "SELECT release_group, version FROM tv_episodes WHERE showid = ? AND season = ? AND episode = ?",
                     [bestResult.indexerid, bestResult.season, bestResult.episode])
 
-                oldVersion = int(sqlResults[0]["version"])
-                oldRelease_group = (sqlResults[0]["release_group"])
+                oldVersion = int(sql_results[0]["version"])
+                oldRelease_group = (sql_results[0]["release_group"])
 
-                if oldVersion > -1 and oldVersion < bestResult.version:
+                if -1 < oldVersion < bestResult.version:
                     logger.log(u"Found new anime v" + str(bestResult.version) + " to replace existing v" + str(oldVersion))
                 else:
                     continue
@@ -217,8 +234,8 @@ class ProperFinder:
             historyLimit = datetime.datetime.today() - datetime.timedelta(days=30)
 
             # make sure the episode has been downloaded before
-            myDB = db.DBConnection()
-            historyResults = myDB.select(
+            main_db_con = db.DBConnection()
+            historyResults = main_db_con.select(
                 "SELECT resource FROM history " +
                 "WHERE showid = ? AND season = ? AND episode = ? AND quality = ? AND date >= ? " +
                 "AND action IN (" + ",".join([str(x) for x in Quality.SNATCHED + Quality.DOWNLOADED]) + ")",
@@ -249,7 +266,7 @@ class ProperFinder:
                 epObj = curProper.show.getEpisode(curProper.season, curProper.episode)
 
                 # make the result object
-                result = curProper.provider.getResult([epObj])
+                result = curProper.provider.get_result([epObj])
                 result.show = curProper.show
                 result.url = curProper.url
                 result.name = curProper.name
@@ -262,10 +279,12 @@ class ProperFinder:
                 snatchEpisode(result, SNATCHED_PROPER)
                 time.sleep(cpu_presets[sickbeard.CPU_PRESET])
 
-    def _genericName(self, name):
+    @staticmethod
+    def _genericName(name):
         return name.replace(".", " ").replace("-", " ").replace("_", " ").lower()
 
-    def _set_lastProperSearch(self, when):
+    @staticmethod
+    def _set_lastProperSearch(when):
         """
         Record last propersearch in DB
 
@@ -274,26 +293,27 @@ class ProperFinder:
 
         logger.log(u"Setting the last Proper search in the DB to " + str(when), logger.DEBUG)
 
-        myDB = db.DBConnection()
-        sqlResults = myDB.select("SELECT * FROM info")
+        main_db_con = db.DBConnection()
+        sql_results = main_db_con.select("SELECT last_proper_search FROM info")
 
-        if len(sqlResults) == 0:
-            myDB.action("INSERT INTO info (last_backlog, last_indexer, last_proper_search) VALUES (?,?,?)",
-                        [0, 0, str(when)])
+        if len(sql_results) == 0:
+            main_db_con.action("INSERT INTO info (last_backlog, last_indexer, last_proper_search) VALUES (?,?,?)",
+                               [0, 0, str(when)])
         else:
-            myDB.action("UPDATE info SET last_proper_search=" + str(when))
+            main_db_con.action("UPDATE info SET last_proper_search=" + str(when))
 
-    def _get_lastProperSearch(self):
+    @staticmethod
+    def _get_lastProperSearch():
         """
         Find last propersearch from DB
         """
 
-        myDB = db.DBConnection()
-        sqlResults = myDB.select("SELECT * FROM info")
+        main_db_con = db.DBConnection()
+        sql_results = main_db_con.select("SELECT last_proper_search FROM info")
 
         try:
-            last_proper_search = datetime.date.fromordinal(int(sqlResults[0]["last_proper_search"]))
-        except:
+            last_proper_search = datetime.date.fromordinal(int(sql_results[0]["last_proper_search"]))
+        except Exception:
             return datetime.date.fromordinal(1)
 
         return last_proper_search

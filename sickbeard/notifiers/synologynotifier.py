@@ -11,11 +11,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import subprocess
@@ -28,7 +28,7 @@ from sickrage.helper.encoding import ek
 from sickrage.helper.exceptions import ex
 
 
-class synologyNotifier(object):
+class Notifier(object):
     def notify_snatch(self, ep_name):
         if sickbeard.SYNOLOGYNOTIFIER_NOTIFY_ONSNATCH:
             self._send_synologyNotifier(ep_name, common.notifyStrings[common.NOTIFY_SNATCH])
@@ -47,6 +47,12 @@ class synologyNotifier(object):
             title = common.notifyStrings[common.NOTIFY_GIT_UPDATE]
             self._send_synologyNotifier(update_text + new_version, title)
 
+    def notify_login(self, ipaddress=""):
+        if sickbeard.USE_SYNOLOGYNOTIFIER:
+            update_text = common.notifyStrings[common.NOTIFY_LOGIN_TEXT]
+            title = common.notifyStrings[common.NOTIFY_LOGIN]
+            self._send_synologyNotifier(update_text.format(ipaddress), title)
+
     def _send_synologyNotifier(self, message, title):
         synodsmnotify_cmd = ["/usr/syno/bin/synodsmnotify", "@administrators", title, message]
         logger.log(u"Executing command " + str(synodsmnotify_cmd))
@@ -56,8 +62,5 @@ class synologyNotifier(object):
                                  cwd=sickbeard.PROG_DIR)
             out, err = p.communicate()  # @UnusedVariable
             logger.log(u"Script result: " + str(out), logger.DEBUG)
-        except OSError, e:
+        except OSError as e:
             logger.log(u"Unable to run synodsmnotify: " + ex(e))
-
-
-notifier = synologyNotifier

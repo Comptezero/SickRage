@@ -6,9 +6,10 @@ from hashlib import sha1
 from base64 import b16encode, b32decode
 
 import sickbeard
-from sickbeard import logger
+from sickbeard import logger, helpers
 from bencode import bencode, bdecode
 import requests
+import cookielib
 from bencode.BTL import BTFailure
 from sickrage.helper.common import http_code_description
 
@@ -26,10 +27,11 @@ class GenericClient(object):
         self.response = None
         self.auth = None
         self.last_time = time.time()
-        self.session = requests.Session()
+        self.session = helpers.make_session()
         self.session.auth = (self.username, self.password)
+        self.session.cookies = cookielib.CookieJar()
 
-    def _request(self, method='get', params=None, data=None, files=None):
+    def _request(self, method='get', params=None, data=None, files=None, cookies=None):
 
         if time.time() > self.last_time + 1800 or not self.auth:
             self.last_time = time.time()
@@ -41,23 +43,24 @@ class GenericClient(object):
 
         if not self.auth:
             logger.log(self.name + u': Authentication Failed', logger.WARNING)
+
             return False
         try:
-            self.response = self.session.__getattribute__(method)(self.url, params=params, data=data, files=files,
+            self.response = self.session.__getattribute__(method)(self.url, params=params, data=data, files=files, cookies=cookies,
                                                                   timeout=120, verify=False)
-        except requests.exceptions.ConnectionError, e:
+        except requests.exceptions.ConnectionError as e:
             logger.log(self.name + u': Unable to connect ' + str(e), logger.ERROR)
             return False
         except (requests.exceptions.MissingSchema, requests.exceptions.InvalidURL):
             logger.log(self.name + u': Invalid Host', logger.ERROR)
             return False
-        except requests.exceptions.HTTPError, e:
+        except requests.exceptions.HTTPError as e:
             logger.log(self.name + u': Invalid HTTP Request ' + str(e), logger.ERROR)
             return False
-        except requests.exceptions.Timeout, e:
+        except requests.exceptions.Timeout as e:
             logger.log(self.name + u': Connection Timeout ' + str(e), logger.WARNING)
             return False
-        except Exception, e:
+        except Exception as e:
             logger.log(self.name + u': Unknown exception raised when send torrent to ' + self.name + ': ' + str(e),
                        logger.ERROR)
             return False
@@ -69,76 +72,77 @@ class GenericClient(object):
         code_description = http_code_description(self.response.status_code)
 
         if code_description is not None:
-            logger.log(self.name + u': ' + code_description, logger.DEBUG)
+            logger.log(self.name + u': ' + code_description, logger.INFO)
             return False
 
         logger.log(self.name + u': Response to ' + method.upper() + ' request is ' + self.response.text, logger.DEBUG)
 
         return True
 
-    def _get_auth(self):
+    def _get_auth(self):  # pylint:disable=no-self-use
         """
         This should be overridden and should return the auth_id needed for the client
         """
         return None
 
-    def _add_torrent_uri(self, result):
+    def _add_torrent_uri(self, result):  # pylint:disable=unused-argument, no-self-use
         """
         This should be overridden should return the True/False from the client
         when a torrent is added via url (magnet or .torrent link)
         """
         return False
 
-    def _add_torrent_file(self, result):
+    def _add_torrent_file(self, result):  # pylint:disable=unused-argument, no-self-use
         """
         This should be overridden should return the True/False from the client
         when a torrent is added via result.content (only .torrent file)
         """
         return False
 
-    def _set_torrent_label(self, result):
+    def _set_torrent_label(self, result):  # pylint:disable=unused-argument, no-self-use
         """
         This should be overridden should return the True/False from the client
         when a torrent is set with label
         """
         return True
 
-    def _set_torrent_ratio(self, result):
+    def _set_torrent_ratio(self, result):  # pylint:disable=unused-argument, no-self-use
         """
         This should be overridden should return the True/False from the client
         when a torrent is set with ratio
         """
         return True
 
-    def _set_torrent_seed_time(self, result):
+    def _set_torrent_seed_time(self, result):  # pylint:disable=unused-argument, no-self-use
         """
         This should be overridden should return the True/False from the client
         when a torrent is set with a seed time
         """
         return True
 
-    def _set_torrent_priority(self, result):
+    def _set_torrent_priority(self, result):  # pylint:disable=unused-argument, no-self-use
         """
         This should be overriden should return the True/False from the client
         when a torrent is set with result.priority (-1 = low, 0 = normal, 1 = high)
         """
         return True
 
-    def _set_torrent_path(self, torrent_path):
+    def _set_torrent_path(self, torrent_path):  # pylint:disable=unused-argument, no-self-use
         """
         This should be overridden should return the True/False from the client
         when a torrent is set with path
         """
         return True
 
-    def _set_torrent_pause(self, result):
+    def _set_torrent_pause(self, result):  # pylint:disable=unused-argument, no-self-use
         """
         This should be overridden should return the True/False from the client
         when a torrent is set with pause
         """
         return True
 
-    def _get_torrent_hash(self, result):
+    @staticmethod
+    def _get_torrent_hash(result):
 
         if result.url.startswith('magnet'):
             result.hash = re.findall(r'urn:btih:([\w]{32,40})', result.url)[0]
@@ -170,13 +174,14 @@ class GenericClient(object):
 
         logger.log(u'Calling ' + self.name + ' Client', logger.DEBUG)
 
-        if not self._get_auth():
-            logger.log(self.name + u': Authentication Failed', logger.ERROR)
-            return r_code
+        if not self.auth:
+            if not self._get_auth():
+                logger.log(self.name + u': Authentication Failed', logger.WARNING)
+                return r_code
 
         try:
             # Sets per provider seed ratio
-            result.ratio = result.provider.seedRatio()
+            result.ratio = result.provider.seed_ratio()
 
             # lazy fix for now, I'm sure we already do this somewhere else too
             result = self._get_torrent_hash(result)
@@ -187,7 +192,7 @@ class GenericClient(object):
                 r_code = self._add_torrent_file(result)
 
             if not r_code:
-                logger.log(self.name + u': Unable to send Torrent: Return code undefined', logger.ERROR)
+                logger.log(self.name + u': Unable to send Torrent', logger.WARNING)
                 return False
 
             if not self._set_torrent_pause(result):
@@ -208,7 +213,7 @@ class GenericClient(object):
             if result.priority != 0 and not self._set_torrent_priority(result):
                 logger.log(self.name + u': Unable to set priority for Torrent', logger.ERROR)
 
-        except Exception, e:
+        except Exception as e:
             logger.log(self.name + u': Failed Sending Torrent', logger.ERROR)
             logger.log(self.name + u': Exception raised when sending torrent: ' + str(result) + u'. Error: ' + str(e), logger.DEBUG)
             return r_code

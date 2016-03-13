@@ -1,3 +1,4 @@
+# coding=utf-8
 # Author: Nic Wolfe <nic@wolfeden.ca>
 # URL: https://sickrage.github.io
 # Git: https://github.com/SickRage/SickRage.git
@@ -11,11 +12,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
 import os
@@ -24,7 +25,7 @@ import sickbeard
 from sickbeard import tv
 from sickbeard import common
 from sickbeard import logger
-from sickbeard.name_parser.parser import NameParser
+from sickbeard.name_parser.parser import NameParser, InvalidNameException, InvalidShowException
 from sickbeard.common import Quality, DOWNLOADED
 
 from sickrage.helper.encoding import ek
@@ -52,7 +53,7 @@ name_sports_presets = (
 )
 
 
-class TVShow(object):
+class TVShow(object):  # pylint: disable=too-few-public-methods
     def __init__(self):
         self.name = "Show Name"
         self.genre = "Comedy"
@@ -99,8 +100,8 @@ class TVShow(object):
     is_scene = property(_is_scene)
 
 
-class TVEpisode(tv.TVEpisode):
-    def __init__(self, season, episode, absolute_number, name):
+class TVEpisode(tv.TVEpisode):  # pylint: disable=too-many-instance-attributes
+    def __init__(self, season, episode, absolute_number, name):  # pylint: disable=super-init-not-called
         self.relatedEps = []
         self._name = name
         self._season = season
@@ -189,7 +190,8 @@ def check_valid_sports_naming(pattern=None):
     return valid
 
 
-def validate_name(pattern, multi=None, anime_type=None, file_only=False, abd=False, sports=False):
+def validate_name(pattern, multi=None, anime_type=None,  # pylint: disable=too-many-arguments, too-many-return-statements
+                  file_only=False, abd=False, sports=False):
     """
     See if we understand a name
 
@@ -214,12 +216,10 @@ def validate_name(pattern, multi=None, anime_type=None, file_only=False, abd=Fal
 
     logger.log(u"Trying to parse " + new_name, logger.DEBUG)
 
-    parser = NameParser(True, showObj=ep.show, naming_pattern=True)
-
     try:
-        result = parser.parse(new_name)
-    except Exception:
-        logger.log(u"Unable to parse " + new_name + ", not valid", logger.DEBUG)
+        result = NameParser(True, showObj=ep.show, naming_pattern=True).parse(new_name)
+    except (InvalidNameException, InvalidShowException) as error:
+        logger.log(u"{}".format(error), logger.DEBUG)
         return False
 
     logger.log(u"The name " + new_name + " parsed into " + str(result), logger.DEBUG)
@@ -247,6 +247,7 @@ def generate_sample_ep(multi=None, abd=False, sports=False, anime_type=None):
     # make a fake episode object
     ep = TVEpisode(2, 3, 3, "Ep Name")
 
+    # pylint: disable=protected-access
     ep._status = Quality.compositeStatus(DOWNLOADED, Quality.HDTV)
     ep._airdate = datetime.date(2011, 3, 9)
 

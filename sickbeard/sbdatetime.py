@@ -1,3 +1,4 @@
+# coding=utf-8
 # Author: Nic Wolfe <nic@wolfeden.ca>
 # URL: https://sickrage.github.io
 # Git: https://github.com/SickRage/SickRage.git
@@ -11,11 +12,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
 import locale
@@ -88,6 +89,7 @@ date_presets = (
 )
 
 time_presets = ('%I:%M:%S %p', '%H:%M:%S')
+
 
 # helper class
 class static_or_instance(object):

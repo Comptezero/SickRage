@@ -27,7 +27,7 @@
                 <div class="component-group">
 
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/kodi.png" alt="" title="KODI" />
+                        <span class="icon-notifiers-kodi" title="KODI"></span>
                         <h3><a href="${anon_url('http://kodi.tv/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">KODI</a></h3>
                         <p>A free and open source cross-platform media center and home entertainment system software with a 10-foot user interface designed for the living-room TV.</p>
                     </div>
@@ -37,7 +37,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_kodi" id="use_kodi" ${('', 'checked="checked"')[bool(sickbeard.USE_KODI)]}/>
-                                    <p>should SickRage send KODI commands ?<p>
+                                    <p>Send KODI commands?<p>
                                 </span>
                             </label>
                         </div>
@@ -48,7 +48,7 @@
                                     <span class="component-title">Always on</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="kodi_always_on" id="kodi_always_on" ${('', 'checked="checked"')[bool(sickbeard.KODI_ALWAYS_ON)]}/>
-                                        <p>log errors when unreachable ?</p>
+                                        <p>log errors when unreachable?</p>
                                     </span>
                                 </label>
                             </div>
@@ -57,7 +57,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="kodi_notify_onsnatch" id="kodi_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.KODI_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a notification when a download starts ?</p>
+                                        <p>send a notification when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -66,7 +66,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="kodi_notify_ondownload" id="kodi_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.KODI_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a notification when a download finishes ?</p>
+                                        <p>send a notification when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -75,7 +75,7 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="kodi_notify_onsubtitledownload" id="kodi_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.KODI_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a notification when subtitles are downloaded ?</p>
+                                        <p>send a notification when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
@@ -84,7 +84,7 @@
                                     <span class="component-title">Update library</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="kodi_update_library" id="kodi_update_library" ${('', 'checked="checked"')[bool(sickbeard.KODI_UPDATE_LIBRARY)]}/>
-                                        <p>update KODI library when a download finishes ?</p>
+                                        <p>update KODI library when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -93,7 +93,7 @@
                                     <span class="component-title">Full library update</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="kodi_update_full" id="kodi_update_full" ${('', 'checked="checked"')[bool(sickbeard.KODI_UPDATE_FULL)]}/>
-                                        <p>perform a full library update if update per-show fails ?</p>
+                                        <p>perform a full library update if update per-show fails?</p>
                                     </span>
                                 </label>
                             </div>
@@ -102,7 +102,7 @@
                                     <span class="component-title">Only update first host</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="kodi_update_onlyfirst" id="kodi_update_onlyfirst" ${('', 'checked="checked"')[bool(sickbeard.KODI_UPDATE_ONLYFIRST)]}/>
-                                        <p>only send library updates to the first active host ?</p>
+                                        <p>only send library updates to the first active host?</p>
                                     </span>
                                 </label>
                             </div>
@@ -122,7 +122,7 @@
                             </div>
                             <div class="field-pair">
                                 <label for="kodi_username">
-                                    <span class="component-title">KODI username</span>
+                                    <span class="component-title">Username</span>
                                     <input type="text" name="kodi_username" id="kodi_username" value="${sickbeard.KODI_USERNAME}" class="form-control input-sm input250" autocapitalize="off" autocomplete="no" />
                                 </label>
                                 <label>
@@ -132,7 +132,7 @@
                             </div>
                             <div class="field-pair">
                                 <label for="kodi_password">
-                                    <span class="component-title">KODI password</span>
+                                    <span class="component-title">Password</span>
                                     <input type="password" name="kodi_password" id="kodi_password" value="${sickbeard.KODI_PASSWORD}" class="form-control input-sm input250" autocomplete="no" autocapitalize="off" />
                                 </label>
                                 <label>
@@ -149,26 +149,25 @@
 
                 </div><!-- /kodi component-group //-->
 
-
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/plex.png" alt="" title="Plex Media Server" />
+                        <span class="icon-notifiers-plex" title="Plex Media Server"></span>
                         <h3><a href="${anon_url('http://www.plexapp.com/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Plex Media Server</a></h3>
                         <p>Experience your media on a visually stunning, easy to use interface on your Mac connected to your TV. Your media library has never looked this good!</p>
                         <p class="plexinfo hide">For sending notifications to Plex Home Theater (PHT) clients, use the KODI notifier with port <b>3005</b>.</p>
                     </div>
                     <fieldset class="component-group-list">
                         <div class="field-pair">
-                            <label for="use_plex">
+                            <label for="use_plex_server">
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
-                                    <input type="checkbox" class="enabler" name="use_plex" id="use_plex" ${('', 'checked="checked"')[bool(sickbeard.USE_PLEX)]}/>
-                                    <p>should SickRage send Plex commands ?</p>
+                                    <input type="checkbox" class="enabler" name="use_plex_server" id="use_plex_server" ${('', 'checked="checked"')[bool(sickbeard.USE_PLEX_SERVER)]}/>
+                                    <p>Send Plex Media Server library updates?</p>
                                 </span>
                             </label>
                         </div>
 
-                        <div id="content_use_plex">
+                        <div id="content_use_plex_server">
                             <div class="field-pair">
                                 <label for="plex_server_token">
                                     <span class="component-title">Plex Media Server Auth Token</span>
@@ -185,29 +184,28 @@
                             </div>
                             <div class="component-group" style="padding: 0; min-height: 130px">
                                 <div class="field-pair">
-                                    <label for="plex_username">
-                                        <span class="component-title">Server Username</span>
+                                    <label for="plex_server_username">
+                                        <span class="component-title">Username</span>
                                         <span class="component-desc">
-                                            <input type="text" name="plex_username" id="plex_username" value="${sickbeard.PLEX_USERNAME}" class="form-control input-sm input250" autocapitalize="off" autocomplete="no" />
+                                            <input type="text" name="plex_server_username" id="plex_server_username" value="${sickbeard.PLEX_SERVER_USERNAME}" class="form-control input-sm input250" autocapitalize="off" autocomplete="no" />
                                             <p>blank = no authentication</p>
                                         </span>
                                     </label>
                                 </div>
                                 <div class="field-pair">
-                                    <label for="plex_password">
-                                        <span class="component-title">Server/client password</span>
+                                    <label for="plex_server_password">
+                                        <span class="component-title">Password</span>
                                         <span class="component-desc">
-                                            <input type="password" name="plex_password" id="plex_password" value="${'*' * len(sickbeard.PLEX_PASSWORD)}" class="form-control input-sm input250" autocomplete="no" autocapitalize="off" />
+                                            <input type="password" name="plex_server_password" id="plex_server_password" value="${'*' * len(sickbeard.PLEX_SERVER_PASSWORD)}" class="form-control input-sm input250" autocomplete="no" autocapitalize="off" />
                                             <p>blank = no authentication</p>
                                         </span>
                                     </label>
                                 </div>
                             </div>
-
                             <div class="component-group" style="padding: 0; min-height: 50px">
                                 <div class="field-pair">
                                     <label for="plex_update_library">
-                                        <span class="component-title">Update server library</span>
+                                        <span class="component-title">Update Library</span>
                                         <span class="component-desc">
                                             <input type="checkbox" class="enabler" name="plex_update_library" id="plex_update_library" ${('', 'checked="checked"')[bool(sickbeard.PLEX_UPDATE_LIBRARY)]}/>
                                             <p>update Plex Media Server library when a download finishes</p>
@@ -226,31 +224,39 @@
                                             </span>
                                         </label>
                                     </div>
-
                                     <div class="field-pair">
-                                        <div class="testNotification" id="testPMS-result">Click below to test Plex server(s)</div>
-                                        <input class="btn" type="button" value="Test Plex Server" id="testPMS" />
+                                        <label for="plex_server_https">
+                                            <span class="component-title">HTTPS</span>
+                                            <span class="component-desc">
+                                                <input type="checkbox" name="plex_server_https" id="plex_server_https" ${('', 'checked="checked"')[bool(sickbeard.PLEX_SERVER_HTTPS)]}/>
+                                                <p>use https for plex media server requests?</p>
+                                            </span>
+                                        </label>
+                                    </div>
+                                    <div class="field-pair">
+                                        <div class="testNotification" id="testPMS-result">Click below to test Plex Media Server(s)</div>
+                                        <input class="btn" type="button" value="Test Plex Media Server" id="testPMS" />
                                         <input type="submit" class="config_submitter btn" value="Save Changes" />
                                         <div class="clear-left">&nbsp;</div>
                                     </div>
                                 </div>
                             </div>
-                        </div><!-- /content_use_plex -->
+                        </div><!-- /content_use_plex_server -->
                     </fieldset>
                 </div><!-- /plex media server component-group -->
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/plex.png" alt="" title="Plex Media Client" />
-                        <h3><a href="${anon_url('http://www.plexapp.com/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Plex Media Client</a></h3>
+                        <span class="icon-notifiers-plexth" title="Plex Home Theater"></span>
+                        <h3><a href="${anon_url('http://www.plexapp.com/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Plex Home Theater</a></h3>
                     </div>
                     <fieldset class="component-group-list">
                         <div class="field-pair">
                             <label for="use_plex_client">
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
-                                    <input type="checkbox" class="enabler" name="use_plex" id="use_plex_client" ${('', 'checked="checked"')[bool(sickbeard.USE_PLEX_CLIENT)]}/>
-                                    <p>should SickRage send Plex commands ?</p>
+                                    <input type="checkbox" class="enabler" name="use_plex_client" id="use_plex_client" ${('', 'checked="checked"')[bool(sickbeard.USE_PLEX_CLIENT)]}/>
+                                    <p>Send Plex Home Theater notifications?</p>
                                 </span>
                             </label>
                         </div>
@@ -261,7 +267,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="plex_notify_onsnatch" id="plex_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.PLEX_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a notification when a download starts ?</p>
+                                        <p>send a notification when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -270,7 +276,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="plex_notify_ondownload" id="plex_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.PLEX_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a notification when a download finishes ?</p>
+                                        <p>send a notification when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -279,25 +285,25 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="plex_notify_onsubtitledownload" id="plex_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.PLEX_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a notification when subtitles are downloaded ?</p>
+                                        <p>send a notification when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
                             <div class="field-pair">
-                                <label for="plex_host">
-                                    <span class="component-title">Plex Client IP:Port</span>
+                                <label for="plex_client_host">
+                                    <span class="component-title">Plex Home Theater IP:Port</span>
                                     <span class="component-desc">
-                                        <input type="text" name="plex_host" id="plex_host" value="${sickbeard.PLEX_HOST}" class="form-control input-sm input350" autocapitalize="off" />
+                                        <input type="text" name="plex_client_host" id="plex_client_host" value="${sickbeard.PLEX_CLIENT_HOST}" class="form-control input-sm input350" autocapitalize="off" />
                                         <div class="clear-left">
-                                            <p>one or more hosts running Plex client<br>(eg. 192.168.1.100:3000, 192.168.1.101:3000)</p>
+                                            <p>one or more hosts running Plex Home Theater<br>(eg. 192.168.1.100:3000, 192.168.1.101:3000)</p>
                                         </div>
                                     </span>
                                 </label>
                             </div>
                             <div class="component-group" style="padding: 0; min-height: 130px">
                                 <div class="field-pair">
-                                    <label for="plex_username">
-                                        <span class="component-title">Server Username</span>
+                                    <label for="plex_server_username">
+                                        <span class="component-title">Username</span>
                                         <span class="component-desc">
                                             <input type="text" name="plex_client_username" id="plex_client_username" value="${sickbeard.PLEX_CLIENT_USERNAME}" class="form-control input-sm input250" autocapitalize="off" autocomplete="no" />
                                             <p>blank = no authentication</p>
@@ -306,7 +312,7 @@
                                 </div>
                                 <div class="field-pair">
                                     <label for="plex_client_password">
-                                        <span class="component-title">Client Password</span>
+                                        <span class="component-title">Password</span>
                                         <span class="component-desc">
                                             <input type="password" name="plex_client_password" id="plex_client_password" value="${'*' * len(sickbeard.PLEX_CLIENT_PASSWORD)}" class="form-control input-sm input250" autocomplete="no" autocapitalize="off" />
                                             <p>blank = no authentication</p>
@@ -316,19 +322,19 @@
                             </div>
 
                             <div class="field-pair">
-                                <div class="testNotification" id="testPMC-result">Click below to test Plex client(s)</div>
-                                <input class="btn" type="button" value="Test Plex Client" id="testPMC" />
+                                <div class="testNotification" id="testPHT-result">Click below to test Plex Home Theater(s)</div>
+                                <input class="btn" type="button" value="Test Plex Home Theater" id="testPHT" />
                                 <input type="submit" class="config_submitter btn" value="Save Changes" />
-                                <div class=clear-left><p>Note: some Plex clients <b class="boldest">do not</b> support notifications e.g. Plexapp for Samsung TVs</p></div>
+                                <div class=clear-left><p>Note: some Plex Home Theaters <b class="boldest">do not</b> support notifications e.g. Plexapp for Samsung TVs</p></div>
                             </div>
                         </div><!-- /content_use_plex_client -->
                     </fieldset>
-                </div><!-- /plex client component-group -->
+                </div><!-- /Plex Home Theater component-group -->
 
 
                  <div class="component-group">
                      <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/emby.png" alt="" title="Emby" />
+                        <span class="icon-notifiers-emby" alt="" title="Emby"></span>
                         <h3><a href="${anon_url('http://emby.media/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Emby</a></h3>
                         <p>A home media server built using other popular open source technologies.</p>
                     </div>
@@ -338,7 +344,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_emby" id="use_emby" ${('', 'checked="checked"')[bool(sickbeard.USE_EMBY)]} />
-                                    <p>should SickRage send update commands to Emby?<p>
+                                    <p>Send update commands to Emby?<p>
                                 </span>
                             </label>
                         </div>
@@ -370,7 +376,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/nmj.png" alt="" title="Networked Media Jukebox" />
+                        <span class="icon-notifiers-nmj" alt="" title="Networked Media Jukebox"></span>
                         <h3><a href="${anon_url('http://www.popcornhour.com/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">NMJ</a></h3>
                         <p>The Networked Media Jukebox, or NMJ, is the official media jukebox interface made available for the Popcorn Hour 200-series.</p>
                     </div>
@@ -380,7 +386,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_nmj" id="use_nmj" ${('', 'checked="checked"')[bool(sickbeard.USE_NMJ)]}/>
-                                    <p>should SickRage send update commands to NMJ ?</p>
+                                    <p>Send update commands to NMJ?</p>
                                 </span>
                             </label>
                         </div>
@@ -436,7 +442,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/nmj.png" alt="" title="Networked Media Jukebox v2"/>
+                        <span class="icon-notifiers-nmj" alt="" title="Networked Media Jukebox v2"></span>
                         <h3><a href="${anon_url('http://www.popcornhour.com/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">NMJv2</a></h3>
                         <p>The Networked Media Jukebox, or NMJv2, is the official media jukebox interface made available for the Popcorn Hour 300 & 400-series.</p>
                     </div>
@@ -446,7 +452,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_nmjv2" id="use_nmjv2" ${('', 'checked="checked"')[bool(sickbeard.USE_NMJv2)]}/>
-                                    <p>should SickRage send update commands to NMJv2 ?</p>
+                                    <p>Send update commands to NMJv2?</p>
                                 </span>
                             </label>
                         </div>
@@ -524,7 +530,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/synoindex.png" alt="" title="Synology" />
+                        <span class="icon-notifiers-syno1" alt="" title="Synology"></span>
                         <h3><a href="${anon_url('http://synology.com/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Synology</a></h3>
                         <p>The Synology DiskStation NAS.</p>
                         <p>Synology Indexer is the daemon running on the Synology NAS to build its media database.</p>
@@ -536,7 +542,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_synoindex" id="use_synoindex" ${('', 'checked="checked"')[bool(sickbeard.USE_SYNOINDEX)]}/>
-                                    <p>should SickRage send Synology notifications ?</p>
+                                    <p>Send Synology notifications?</p>
                                 </span>
                             </label>
                             <label>
@@ -555,7 +561,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/synologynotifier.png" alt="" title="Synology Indexer" />
+                        <span class="icon-notifiers-syno2" alt="" title="Synology Indexer"></span>
                         <h3><a href="${anon_url('http://synology.com/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Synology Notifier</a></h3>
                         <p>Synology Notifier is the notification system of Synology DSM</p>
                     </div>
@@ -566,7 +572,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_synologynotifier" id="use_synologynotifier" ${('', 'checked="checked"')[bool(sickbeard.USE_SYNOLOGYNOTIFIER)]}/>
-                                    <p>should SickRage send notifications to the Synology Notifier ?</p>
+                                    <p>Send notifications to the Synology Notifier?</p>
                                 </span>
                             </label>
                             <label>
@@ -580,7 +586,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="synologynotifier_notify_onsnatch" id="synologynotifier_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.SYNOLOGYNOTIFIER_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a notification when a download starts ?</p>
+                                        <p>send a notification when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -589,7 +595,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="synologynotifier_notify_ondownload" id="synologynotifier_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.SYNOLOGYNOTIFIER_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a notification when a download finishes ?</p>
+                                        <p>send a notification when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -598,7 +604,7 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="synologynotifier_notify_onsubtitledownload" id="synologynotifier_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.SYNOLOGYNOTIFIER_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a notification when subtitles are downloaded ?</p>
+                                        <p>send a notification when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
@@ -610,7 +616,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/pytivo.png" alt="" title="pyTivo" />
+                        <span class="icon-notifiers-pytivo" alt="" title="pyTivo"></span>
                         <h3><a href="${anon_url('http://pytivo.sourceforge.net/wiki/index.php/PyTivo')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">pyTivo</a></h3>
                         <p>pyTivo is both an HMO and GoBack server. This notifier will load the completed downloads to your Tivo.</p>
                     </div>
@@ -620,7 +626,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_pytivo" id="use_pytivo" ${('', 'checked="checked"')[bool(sickbeard.USE_PYTIVO)]}/>
-                                    <p>should SickRage send notifications to pyTivo ?</p>
+                                    <p>Send notifications to pyTivo?</p>
                                 </span>
                             </label>
                             <label>
@@ -672,7 +678,7 @@
             <div id="tabs-2">
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/growl.png" alt="" title="Growl" />
+                        <span class="icon-notifiers-growl" alt="" title="Growl"></span>
                         <h3><a href="${anon_url('http://growl.info/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Growl</a></h3>
                         <p>A cross-platform unobtrusive global notification system.</p>
                     </div>
@@ -682,7 +688,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_growl" id="use_growl" ${('', 'checked="checked"')[bool(sickbeard.USE_GROWL)]}/>
-                                    <p>should SickRage send Growl notifications ?</p>
+                                    <p>Send Growl notifications?</p>
                                 </span>
                             </label>
                         </div>
@@ -693,7 +699,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="growl_notify_onsnatch" id="growl_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.GROWL_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a notification when a download starts ?</p>
+                                        <p>send a notification when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -702,7 +708,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="growl_notify_ondownload" id="growl_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.GROWL_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a notification when a download finishes ?</p>
+                                        <p>send a notification when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -711,7 +717,7 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="growl_notify_onsubtitledownload" id="growl_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.GROWL_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a notification when subtitles are downloaded ?</p>
+                                        <p>send a notification when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
@@ -727,7 +733,7 @@
                             </div>
                             <div class="field-pair">
                                 <label for="growl_password">
-                                    <span class="component-title">Growl password</span>
+                                    <span class="component-title">Password</span>
                                     <input type="password" name="growl_password" id="growl_password" value="${sickbeard.GROWL_PASSWORD}" class="form-control input-sm input250" autocomplete="no" autocapitalize="off" />
                                 </label>
                                 <label>
@@ -750,7 +756,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/prowl.png" alt="Prowl" title="Prowl" />
+                        <span class="icon-notifiers-prowl" title="Prowl"></span>
                         <h3><a href="${anon_url('http://www.prowlapp.com/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Prowl</a></h3>
                         <p>A Growl client for iOS.</p>
                     </div>
@@ -760,7 +766,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_prowl" id="use_prowl" ${('', 'checked="checked"')[bool(sickbeard.USE_PROWL)]}/>
-                                    <p>should SickRage send Prowl notifications ?</p>
+                                    <p>Send Prowl notifications?</p>
                                 </span>
                             </label>
                         </div>
@@ -771,7 +777,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="prowl_notify_onsnatch" id="prowl_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.PROWL_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a notification when a download starts ?</p>
+                                        <p>send a notification when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -780,7 +786,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="prowl_notify_ondownload" id="prowl_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.PROWL_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a notification when a download finishes ?</p>
+                                        <p>send a notification when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -789,7 +795,7 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="prowl_notify_onsubtitledownload" id="prowl_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.PROWL_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a notification when subtitles are downloaded ?</p>
+                                        <p>send a notification when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
@@ -806,10 +812,10 @@
                                 </label>
                                 <label>
                                     <span class="component-title">&nbsp;</span>
-                                    <span class="component-desc">Prowl API(s) listed here, separated by commas if applicable, will<br /> receive notifications for <b>all</b> shows.
+                                    <span class="component-desc">Prowl API(s) listed here, separated by commas if applicable, will<br> receive notifications for <b>all</b> shows.
                                                                  Your Prowl API key is available at:
                                                                  <a href="${anon_url('https://www.prowlapp.com/api_settings.php')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">
-                                                                 https://www.prowlapp.com/api_settings.php</a><br />
+                                                                 https://www.prowlapp.com/api_settings.php</a><br>
                                                                  (This field may be blank except when testing.)</span>
                                 </label>
                             </div>
@@ -862,7 +868,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/libnotify.png" alt="" title="Libnotify" />
+                        <span class="icon-notifiers-libnotify" title="Libnotify"></span>
                         <h3><a href="${anon_url('http://library.gnome.org/devel/libnotify/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Libnotify</a></h3>
                         <p>The standard desktop notification API for Linux/*nix systems.  This notifier will only function if the pynotify module is installed (Ubuntu/Debian package <a href="apt:python-notify">python-notify</a>).</p>
                     </div>
@@ -872,7 +878,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_libnotify" id="use_libnotify" ${('', 'checked="checked"')[bool(sickbeard.USE_LIBNOTIFY)]}/>
-                                    <p>should SickRage send Libnotify notifications ?</p>
+                                    <p>Send Libnotify notifications?</p>
                                 </span>
                             </label>
                         </div>
@@ -883,7 +889,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="libnotify_notify_onsnatch" id="libnotify_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.LIBNOTIFY_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a notification when a download starts ?</p>
+                                        <p>send a notification when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -892,7 +898,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="libnotify_notify_ondownload" id="libnotify_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.LIBNOTIFY_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a notification when a download finishes ?</p>
+                                        <p>send a notification when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -901,7 +907,7 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="libnotify_notify_onsubtitledownload" id="libnotify_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.LIBNOTIFY_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a notification when subtitles are downloaded ?</p>
+                                        <p>send a notification when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
@@ -916,7 +922,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/pushover.png" alt="" title="Pushover" />
+                        <span class="icon-notifiers-pushover" alt="" title="Pushover"></span>
                         <h3><a href="${anon_url('https://pushover.net/apps/clone/sickrage')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Pushover</a></h3>
                         <p>Pushover makes it easy to send real-time notifications to your Android and iOS devices.</p>
                     </div>
@@ -926,7 +932,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_pushover" id="use_pushover" ${('', 'checked="checked"')[bool(sickbeard.USE_PUSHOVER)]}/>
-                                    <p>should SickRage send Pushover notifications ?</p>
+                                    <p>Send Pushover notifications?</p>
                                 </span>
                             </label>
                         </div>
@@ -937,7 +943,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="pushover_notify_onsnatch" id="pushover_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.PUSHOVER_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a notification when a download starts ?</p>
+                                        <p>send a notification when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -946,7 +952,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="pushover_notify_ondownload" id="pushover_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.PUSHOVER_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a notification when a download finishes ?</p>
+                                        <p>send a notification when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -955,7 +961,7 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="pushover_notify_onsubtitledownload" id="pushover_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.PUSHOVER_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a notification when subtitles are downloaded ?</p>
+                                        <p>send a notification when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1033,7 +1039,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/boxcar2.png" alt="" title="Boxcar 2"/>
+                        <span class="icon-notifiers-boxcar2" alt="" title="Boxcar 2"></span>
                         <h3><a href="${anon_url('https://new.boxcar.io/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Boxcar 2</a></h3>
                         <p>Read your messages where and when you want them!</p>
                     </div>
@@ -1043,7 +1049,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_boxcar2" id="use_boxcar2" ${('', 'checked="checked"')[bool(sickbeard.USE_BOXCAR2)]}/>
-                                    <p>should SickRage send Boxcar notifications ?</p>
+                                    <p>Send Boxcar notifications?</p>
                                 </span>
                             </label>
                         </div>
@@ -1054,7 +1060,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="boxcar2_notify_onsnatch" id="boxcar2_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.BOXCAR2_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a notification when a download starts ?</p>
+                                        <p>send a notification when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1063,7 +1069,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="boxcar2_notify_ondownload" id="boxcar2_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.BOXCAR2_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a notification when a download finishes ?</p>
+                                        <p>send a notification when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1072,7 +1078,7 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="boxcar2_notify_onsubtitledownload" id="boxcar2_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.BOXCAR2_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a notification when subtitles are downloaded ?</p>
+                                        <p>send a notification when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1096,7 +1102,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/nma.png" alt="" title="NMA"/>
+                        <span class="icon-notifiers-nma" alt="" title="NMA"></span>
                         <h3><a href="${anon_url('http://nma.usk.bz')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Notify My Android</a></h3>
                         <p>Notify My Android is a Prowl-like Android App and API that offers an easy way to send notifications from your application directly to your Android device.</p>
                     </div>
@@ -1106,7 +1112,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_nma" id="use_nma" ${('', 'checked="checked"')[bool(sickbeard.USE_NMA)]}/>
-                                    <p>should SickRage send NMA notifications ?</p>
+                                    <p>Send NMA notifications?</p>
                                 </span>
                             </label>
                         </div>
@@ -1117,7 +1123,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="nma_notify_onsnatch" id="nma_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.NMA_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a notification when a download starts ?</p>
+                                        <p>send a notification when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1126,7 +1132,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="nma_notify_ondownload" id="nma_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.NMA_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a notification when a download finishes ?</p>
+                                        <p>send a notification when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1135,7 +1141,7 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="nma_notify_onsubtitledownload" id="nma_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.NMA_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a notification when subtitles are downloaded ?</p>
+                                        <p>send a notification when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1175,7 +1181,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/pushalot.png" alt="" title="Pushalot" />
+                        <span class="icon-notifiers-pushalot" alt="" title="Pushalot"></span>
                         <h3><a href="${anon_url('https://pushalot.com')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Pushalot</a></h3>
                         <p>Pushalot is a platform for receiving custom push notifications to connected devices running Windows Phone or Windows 8.</p>
                     </div>
@@ -1185,7 +1191,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_pushalot" id="use_pushalot" ${('', 'checked="checked"')[bool(sickbeard.USE_PUSHALOT)]}/>
-                                    <p>should SickRage send Pushalot notifications ?
+                                    <p>Send Pushalot notifications ?
                                 </span>
                             </label>
                         </div>
@@ -1196,7 +1202,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="pushalot_notify_onsnatch" id="pushalot_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.PUSHALOT_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a notification when a download starts ?</p>
+                                        <p>send a notification when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1205,7 +1211,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="pushalot_notify_ondownload" id="pushalot_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.PUSHALOT_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a notification when a download finishes ?</p>
+                                        <p>send a notification when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1214,7 +1220,7 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="pushalot_notify_onsubtitledownload" id="pushalot_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.PUSHALOT_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a notification when subtitles are downloaded ?</p>
+                                        <p>send a notification when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1238,7 +1244,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/pushbullet.png" alt="" title="Pushbullet" />
+                        <span class="icon-notifiers-pushbullet" alt="" title="Pushbullet"></span>
                         <h3><a href="${anon_url('https://www.pushbullet.com')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Pushbullet</a></h3>
                         <p>Pushbullet is a platform for receiving custom push notifications to connected devices running Android and desktop Chrome browsers.</p>
                     </div>
@@ -1248,7 +1254,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_pushbullet" id="use_pushbullet" ${('', 'checked="checked"')[bool(sickbeard.USE_PUSHBULLET)]}/>
-                                    <p>should SickRage send Pushbullet notifications ?</p>
+                                    <p>Send Pushbullet notifications?</p>
                                 </span>
                             </label>
                         </div>
@@ -1259,7 +1265,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="pushbullet_notify_onsnatch" id="pushbullet_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.PUSHBULLET_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a notification when a download starts ?</p>
+                                        <p>send a notification when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1268,7 +1274,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="pushbullet_notify_ondownload" id="pushbullet_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.PUSHBULLET_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a notification when a download finishes ?</p>
+                                        <p>send a notification when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1277,7 +1283,7 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="pushbullet_notify_onsubtitledownload" id="pushbullet_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.PUSHBULLET_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a notification when subtitles are downloaded ?</p>
+                                        <p>send a notification when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1312,7 +1318,7 @@
                 </div><!-- /pushbullet component-group //-->
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/freemobile.png" alt="" title="Free Mobile" />
+                        <span class="icon-notifiers-freemobile" alt="" title="Free Mobile"></span>
                         <h3><a href="${anon_url('http://mobile.free.fr/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Free Mobile</a></h3>
                         <p>Free Mobile is a famous French cellular network provider.<br> It provides to their customer a free SMS API.</p>
                     </div>
@@ -1322,7 +1328,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_freemobile" id="use_freemobile" ${('', 'checked="checked"')[bool(sickbeard.USE_FREEMOBILE)]}/>
-                                    <p>should SickRage send SMS notifications ?</p>
+                                    <p>Send SMS notifications?</p>
                                 </span>
                             </label>
                         </div>
@@ -1333,7 +1339,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="freemobile_notify_onsnatch" id="freemobile_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.FREEMOBILE_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a SMS when a download starts ?</p>
+                                        <p>send a SMS when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1342,7 +1348,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="freemobile_notify_ondownload" id="freemobile_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.FREEMOBILE_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a SMS when a download finishes ?</p>
+                                        <p>send a SMS when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1351,7 +1357,7 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="freemobile_notify_onsubtitledownload" id="freemobile_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.FREEMOBILE_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a SMS when subtitles are downloaded ?</p>
+                                        <p>send a SMS when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1382,13 +1388,85 @@
 
                     </fieldset>
                 </div><!-- /freemobile component-group //-->
+                <div class="component-group">
+                    <div class="component-group-desc">
+                        <span class="icon-notifiers-telegram" alt="" title="Telegram"></span>
+                        <h3><a href="${anon_url('https://telegram.org/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Telegram</a></h3>
+                        <p>Telegram is a cloud-based instant messaging service.</p>
+                    </div>
+                    <fieldset class="component-group-list">
+                        <div class="field-pair">
+                            <label for="use_telegram">
+                                <span class="component-title">Enable</span>
+                                <span class="component-desc">
+                                    <input type="checkbox" class="enabler" name="use_telegram" id="use_telegram" ${('', 'checked="checked"')[bool(sickbeard.USE_TELEGRAM)]}/>
+                                    <p>Send Telegram notifications?</p>
+                                </span>
+                            </label>
+                        </div>
+
+                        <div id="content_use_telegram">
+                            <div class="field-pair">
+                                <label for="telegram_notify_onsnatch">
+                                    <span class="component-title">Notify on snatch</span>
+                                    <span class="component-desc">
+                                        <input type="checkbox" name="telegram_notify_onsnatch" id="telegram_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.TELEGRAM_NOTIFY_ONSNATCH)]}/>
+                                        <p>Send a message when a download starts?</p>
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="field-pair">
+                                <label for="telegram_notify_ondownload">
+                                    <span class="component-title">Notify on download</span>
+                                    <span class="component-desc">
+                                        <input type="checkbox" name="telegram_notify_ondownload" id="telegram_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.TELEGRAM_NOTIFY_ONDOWNLOAD)]}/>
+                                        <p>Send a message when a download finishes?</p>
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="field-pair">
+                                <label for="telegram_notify_onsubtitledownload">
+                                    <span class="component-title">Notify on subtitle download</span>
+                                    <span class="component-desc">
+                                        <input type="checkbox" name="telegram_notify_onsubtitledownload" id="telegram_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.TELEGRAM_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
+                                        <p>Send a message when subtitles are downloaded?</p>
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="field-pair">
+                                <label for="telegram_id">
+                                    <span class="component-title">User/group ID</span>
+                                    <input type="text" name="telegram_id" id="telegram_id" value="${sickbeard.TELEGRAM_ID}" class="form-control input-sm input250" autocapitalize="off" />
+                                </label>
+                                <label>
+                                    <span class="component-title">&nbsp;</span>
+                                    <span class="component-desc">Contact @myidbot on Telegram to get an ID</span>
+                                </label>
+                            </div>
+                            <div class="field-pair">
+                                <label for="telegram_password">
+                                    <span class="component-title">Bot API token</span>
+                                    <input type="text" name="telegram_apikey" id="telegram_apikey" value="${sickbeard.TELEGRAM_APIKEY}" class="form-control input-sm input250" autocapitalize="off" />
+                                </label>
+                                <label>
+                                    <span class="component-title">&nbsp;</span>
+                                    <span class="component-desc">Contact @BotFather on Telegram to set up one</span>
+                                </label>
+                            </div>
+                            <div class="testNotification" id="testTelegram-result">Click below to test your settings.</div>
+                            <input  class="btn" type="button" value="Test Telegram" id="testTelegram" />
+                            <input type="submit" class="config_submitter btn" value="Save Changes" />
+                        </div><!-- /content_use_telegram //-->
+
+                    </fieldset>
+                </div><!-- /telegram component-group //-->
 
             </div>
 
             <div id="tabs-3">
                 <div class="component-group">
                        <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/twitter.png" alt="" title="Twitter"/>
+                        <span class="icon-notifiers-twitter" alt="" title="Twitter"></span>
                         <h3><a href="${anon_url('http://www.twitter.com/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Twitter</a></h3>
                         <p>A social networking and microblogging service, enabling its users to send and read other users' messages called tweets.</p>
                     </div>
@@ -1398,7 +1476,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_twitter" id="use_twitter" ${('', 'checked="checked"')[bool(sickbeard.USE_TWITTER)]}/>
-                                    <p>should SickRage post tweets on Twitter ?</p>
+                                    <p>Should SickRage post tweets on Twitter?</p>
                                 </span>
                             </label>
                             <label>
@@ -1413,7 +1491,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="twitter_notify_onsnatch" id="twitter_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.TWITTER_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a notification when a download starts ?</p>
+                                        <p>send a notification when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1422,7 +1500,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="twitter_notify_ondownload" id="twitter_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.TWITTER_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a notification when a download finishes ?</p>
+                                        <p>send a notification when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1431,7 +1509,7 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="twitter_notify_onsubtitledownload" id="twitter_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.TWITTER_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a notification when subtitles are downloaded ?</p>
+                                        <p>send a notification when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1490,7 +1568,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/trakt.png" alt="" title="Trakt"/>
+                        <span class="icon-notifiers-trakt" alt="" title="Trakt"></span>
                         <h3><a href="${anon_url('http://trakt.tv/')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Trakt</a></h3>
                         <p>trakt helps keep a record of what TV shows and movies you are watching. Based on your favorites, trakt recommends additional shows and movies you'll enjoy!</p>
                     </div>
@@ -1500,7 +1578,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_trakt" id="use_trakt" ${('', 'checked="checked"')[bool(sickbeard.USE_TRAKT)]}/>
-                                    <p>should SickRage send Trakt.tv notifications ?</p>
+                                    <p>Send Trakt.tv notifications?</p>
                                 </span>
                             </label>
                         </div>
@@ -1508,7 +1586,7 @@
                         <div id="content_use_trakt">
                             <div class="field-pair">
                                 <label for="trakt_username">
-                                    <span class="component-title">Trakt username</span>
+                                    <span class="component-title">Username</span>
                                     <input type="text" name="trakt_username" id="trakt_username" value="${sickbeard.TRAKT_USERNAME}" class="form-control input-sm input250" autocapitalize="off" autocomplete="no" />
                                 </label>
                                 <p>
@@ -1530,7 +1608,7 @@
                             <div class="field-pair">
                                 <label for="trakt_timeout">
                                     <span class="component-title">API Timeout</span>
-                                    <input type="text" name="trakt_timeout" id="trakt_timeout" value="${sickbeard.TRAKT_TIMEOUT}" class="form-control input-sm input75" autocapitalize="off" />
+                                    <input type="number" min="10" step="1" name="trakt_timeout" id="trakt_timeout" value="${sickbeard.TRAKT_TIMEOUT}" class="form-control input-sm input75" autocapitalize="off" />
                                 </label>
                                 <p>
                                     <span class="component-desc">
@@ -1651,7 +1729,7 @@
 
                 <div class="component-group">
                     <div class="component-group-desc">
-                        <img class="notifier-icon" src="${srRoot}/images/notifiers/email.png" alt="" title="Email" />
+                        <span class="icon-notifiers-email" alt="" title="Email"></span>
                         <h3><a href="${anon_url('http://en.wikipedia.org/wiki/Comparison_of_webmail_providers')}" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">Email</a></h3>
                         <p>Allows configuration of email notifications on a per show basis.</p>
                     </div>
@@ -1661,7 +1739,7 @@
                                 <span class="component-title">Enable</span>
                                 <span class="component-desc">
                                     <input type="checkbox" class="enabler" name="use_email" id="use_email" ${('', 'checked="checked"')[bool(sickbeard.USE_EMAIL)]}/>
-                                    <p>should SickRage send email notifications ?</p>
+                                    <p>Send email notifications?</p>
                                 </span>
                             </label>
                         </div>
@@ -1672,7 +1750,7 @@
                                     <span class="component-title">Notify on snatch</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="email_notify_onsnatch" id="email_notify_onsnatch" ${('', 'checked="checked"')[bool(sickbeard.EMAIL_NOTIFY_ONSNATCH)]}/>
-                                        <p>send a notification when a download starts ?</p>
+                                        <p>send a notification when a download starts?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1681,7 +1759,7 @@
                                     <span class="component-title">Notify on download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="email_notify_ondownload" id="email_notify_ondownload" ${('', 'checked="checked"')[bool(sickbeard.EMAIL_NOTIFY_ONDOWNLOAD)]}/>
-                                        <p>send a notification when a download finishes ?</p>
+                                        <p>send a notification when a download finishes?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1690,7 +1768,7 @@
                                     <span class="component-title">Notify on subtitle download</span>
                                     <span class="component-desc">
                                         <input type="checkbox" name="email_notify_onsubtitledownload" id="email_notify_onsubtitledownload" ${('', 'checked="checked"')[bool(sickbeard.EMAIL_NOTIFY_ONSUBTITLEDOWNLOAD)]}/>
-                                        <p>send a notification when subtitles are downloaded ?</p>
+                                        <p>send a notification when subtitles are downloaded?</p>
                                     </span>
                                 </label>
                             </div>
@@ -1707,7 +1785,7 @@
                             <div class="field-pair">
                                 <label for="email_port">
                                     <span class="component-title">SMTP port</span>
-                                    <input type="text" name="email_port" id="email_port" value="${sickbeard.EMAIL_PORT}" class="form-control input-sm input75" autocapitalize="off" />
+                                    <input type="number" min"1" step="1" name="email_port" id="email_port" value="${sickbeard.EMAIL_PORT}" class="form-control input-sm input75" autocapitalize="off" />
                                 </label>
                                 <label>
                                     <span class="component-title">&nbsp;</span>
@@ -1760,8 +1838,19 @@
                                 </label>
                                 <label>
                                     <span class="component-title">&nbsp;</span>
-                                    <span class="component-desc">Email addresses listed here, separated by commas if applicable, will<br /> receive notifications for <b>all</b> shows.<br />
+                                    <span class="component-desc">Email addresses listed here, separated by commas if applicable, will<br> receive notifications for <b>all</b> shows.<br>
                                                                  (This field may be blank except when testing.)</span>
+                                </label>
+                            </div>
+                            <div class="field-pair">
+                                <label for="email_subject">
+                                    <span class="component-title">Email Subject</span>
+                                    <input type="text" name="email_subject" id="email_subject" value="${sickbeard.EMAIL_SUBJECT}" class="form-control input-sm input350" autocapitalize="off" />
+                                </label>
+                                <label>
+                                    <span class="component-title">&nbsp;</span>
+                                    <span class="component-desc">Use a custom subject for some privacy protection?<br>
+                                                                 (Leave blank for the default SickRage subject)</span>
                                 </label>
                             </div>
                             <div class="field-pair">

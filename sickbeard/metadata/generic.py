@@ -12,11 +12,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import io
@@ -231,7 +231,7 @@ class GenericMetadata(object):
     def get_season_all_banner_path(self, show_obj):
         return ek(os.path.join, show_obj.location, self.season_all_banner_name)
 
-    # pylint: disable=W0613,R0201
+    # pylint: disable=unused-argument,no-self-use
     def _show_data(self, show_obj):
         """
         This should be overridden by the implementing class. It should
@@ -239,7 +239,7 @@ class GenericMetadata(object):
         """
         return None
 
-    # pylint: disable=W0613,R0201
+    # pylint: disable=unused-argument,no-self-use
     def _ep_data(self, ep_obj):
         """
         This should be overridden by the implementing class. It should
@@ -288,7 +288,7 @@ class GenericMetadata(object):
                 helpers.chmodAsParent(nfo_file_path)
 
                 return True
-            except IOError, e:
+            except IOError as e:
                 logger.log(
                     u"Unable to write file to " + nfo_file_path + " - are you sure the folder is writable? " + ex(e),
                     logger.ERROR)
@@ -415,7 +415,7 @@ class GenericMetadata(object):
             data.write(nfo_file, encoding='UTF-8')
             nfo_file.close()
             helpers.chmodAsParent(nfo_file_path)
-        except IOError, e:
+        except IOError as e:
             logger.log(u"Unable to write file to " + nfo_file_path + " - are you sure the folder is writable? " + ex(e),
                        logger.ERROR)
             return False
@@ -459,7 +459,7 @@ class GenericMetadata(object):
             data.write(nfo_file, encoding='UTF-8')
             nfo_file.close()
             helpers.chmodAsParent(nfo_file_path)
-        except IOError, e:
+        except IOError as e:
             logger.log(u"Unable to write file to " + nfo_file_path + " - are you sure the folder is writable? " + ex(e),
                        logger.ERROR)
             return False
@@ -707,7 +707,7 @@ class GenericMetadata(object):
             outFile.write(image_data)
             outFile.close()
             helpers.chmodAsParent(image_path)
-        except IOError, e:
+        except IOError as e:
             logger.log(
                 u"Unable to write image to " + image_path + " - are you sure the show folder is writable? " + ex(e),
                 logger.ERROR)
@@ -743,10 +743,10 @@ class GenericMetadata(object):
 
             t = sickbeard.indexerApi(show_obj.indexer).indexer(**lINDEXER_API_PARMS)
             indexer_show_obj = t[show_obj.indexerid]
-        except (sickbeard.indexer_error, IOError), e:
+        except (sickbeard.indexer_error, IOError) as e:
             logger.log(u"Unable to look up show on " + sickbeard.indexerApi(
                 show_obj.indexer).name + ", not downloading images: " + ex(e), logger.WARNING)
-            logger.log(u"Indexer " + sickbeard.indexerApi(show_obj.indexer).name + "maybe experiencing some problems. Try again later", logger.DEBUG)
+            logger.log(u"%s may be experiencing some problems. Try again later." % sickbeard.indexerApi(show_obj.indexer).name, logger.DEBUG)
             return None
 
         if image_type not in ('fanart', 'poster', 'banner', 'poster_thumb', 'banner_thumb'):
@@ -813,10 +813,10 @@ class GenericMetadata(object):
 
             t = sickbeard.indexerApi(show_obj.indexer).indexer(**lINDEXER_API_PARMS)
             indexer_show_obj = t[show_obj.indexerid]
-        except (sickbeard.indexer_error, IOError), e:
+        except (sickbeard.indexer_error, IOError) as e:
             logger.log(u"Unable to look up show on " + sickbeard.indexerApi(
                 show_obj.indexer).name + ", not downloading images: " + ex(e), logger.WARNING)
-            logger.log(u"Indexer " + sickbeard.indexerApi(show_obj.indexer).name + "maybe experiencing some problems. Try again later", logger.DEBUG)
+            logger.log(u"%s may be experiencing some problems. Try again later." % sickbeard.indexerApi(show_obj.indexer).name, logger.DEBUG)
             return result
 
         # if we have no season banners then just finish
@@ -867,10 +867,10 @@ class GenericMetadata(object):
 
             t = sickbeard.indexerApi(show_obj.indexer).indexer(**lINDEXER_API_PARMS)
             indexer_show_obj = t[show_obj.indexerid]
-        except (sickbeard.indexer_error, IOError), e:
+        except (sickbeard.indexer_error, IOError) as e:
             logger.log(u"Unable to look up show on " + sickbeard.indexerApi(
                 show_obj.indexer).name + ", not downloading images: " + ex(e), logger.WARNING)
-            logger.log(u"Indexer " + sickbeard.indexerApi(show_obj.indexer).name + "maybe experiencing some problems. Try again later", logger.DEBUG)
+            logger.log(u"%s may be experiencing some problems. Try again later." % sickbeard.indexerApi(show_obj.indexer).name, logger.DEBUG)
             return result
 
         # if we have no season banners then just finish
@@ -946,7 +946,7 @@ class GenericMetadata(object):
                         logger.log(u"Invalid Indexer ID (" + str(indexer_id) + "), not using metadata file because it has TVRage info", logger.WARNING)
                         return empty_return
 
-        except Exception, e:
+        except Exception as e:
             logger.log(
                 u"There was an error parsing your existing metadata file: '" + metadata_path + "' error: " + ex(e),
                 logger.WARNING)
@@ -975,7 +975,7 @@ class GenericMetadata(object):
 
         try:
             search = tmdb.Search()
-            for show_name in set(allPossibleShowNames(show)):
+            for show_name in allPossibleShowNames(show):
                 for result in search.collection({'query': show_name})['results'] + search.tv({'query': show_name})['results']:
                     if types[img_type] and getattr(result, types[img_type]):
                         return "{0}{1}{2}".format(base_url, max_size, result[types[img_type]])

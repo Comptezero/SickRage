@@ -1,3 +1,4 @@
+# coding=utf-8
 # Author: Nic Wolfe <nic@wolfeden.ca>
 # URL: https://sickrage.github.io
 # Git: https://github.com/SickRage/SickRage.git
@@ -11,11 +12,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
 import threading
@@ -29,12 +30,12 @@ from sickrage.show.Show import Show
 from sickrage.helper.exceptions import MultipleShowObjectsException
 
 
-class DailySearcher():
+class DailySearcher(object):  # pylint:disable=too-few-public-methods
     def __init__(self):
         self.lock = threading.Lock()
         self.amActive = False
 
-    def run(self, force=False):
+    def run(self, force=False):  # pylint:disable=too-many-branches
         """
         Runs the daily searcher, queuing selected episodes for search
 
@@ -44,7 +45,7 @@ class DailySearcher():
             return
 
         self.amActive = True
-
+        _ = force
         logger.log(u"Searching for new released episodes ...")
 
         if not network_timezones.network_dict:
@@ -57,14 +58,14 @@ class DailySearcher():
 
         curTime = datetime.datetime.now(network_timezones.sb_timezone)
 
-        myDB = db.DBConnection()
-        sqlResults = myDB.select("SELECT * FROM tv_episodes WHERE status = ? AND season > 0 AND (airdate <= ? and airdate > 1)",
-                                 [common.UNAIRED, curDate])
+        main_db_con = db.DBConnection()
+        sql_results = main_db_con.select("SELECT showid, airdate, season, episode FROM tv_episodes WHERE status = ? AND (airdate <= ? and airdate > 1)",
+                                         [common.UNAIRED, curDate])
 
         sql_l = []
         show = None
 
-        for sqlEp in sqlResults:
+        for sqlEp in sql_results:
             try:
                 if not show or int(sqlEp["showid"]) != show.indexerid:
                     show = Show.find(sickbeard.showList, int(sqlEp["showid"]))
@@ -87,7 +88,7 @@ class DailySearcher():
                 if air_time > curTime:
                     continue
 
-            ep = show.getEpisode(int(sqlEp["season"]), int(sqlEp["episode"]))
+            ep = show.getEpisode(sqlEp["season"], sqlEp["episode"])
             with ep.lock:
                 if ep.season == 0:
                     logger.log(u"New episode " + ep.prettyName() + " airs today, setting status to SKIPPED because is a special season")
@@ -99,8 +100,8 @@ class DailySearcher():
                 sql_l.append(ep.get_sql())
 
         if len(sql_l) > 0:
-            myDB = db.DBConnection()
-            myDB.mass_action(sql_l)
+            main_db_con = db.DBConnection()
+            main_db_con.mass_action(sql_l)
         else:
             logger.log(u"No new released episodes found ...")
 

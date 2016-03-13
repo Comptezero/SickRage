@@ -1,3 +1,4 @@
+# coding=utf-8
 # This file is part of SickRage.
 #
 # URL: https://sickrage.github.io
@@ -10,11 +11,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import sickbeard
 
@@ -27,7 +28,7 @@ from sickrage.helper.common import dateFormat, timeFormat
 from sickrage.helper.quality import get_quality_string
 
 
-class ComingEpisodes:
+class ComingEpisodes(object):
     """
     Missed:   yesterday...(less than 1 week)
     Today:    today
@@ -64,7 +65,7 @@ class ComingEpisodes:
 
         db = DBConnection()
         fields_to_select = ', '.join(
-            ['airdate', 'airs', 'description', 'episode', 'imdb_id', 'e.indexer', 'indexer_id', 'name', 'network',
+            ['airdate', 'airs', 'e.description as description', 'episode', 'imdb_id', 'e.indexer', 'indexer_id', 'name', 'network',
              'paused', 'quality', 'runtime', 'season', 'show_name', 'showid', 's.status']
         )
         results = db.select(

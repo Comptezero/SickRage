@@ -1,3 +1,4 @@
+# coding=utf-8
 # This file is part of SickRage.
 #
 # URL: https://sickrage.github.io
@@ -10,11 +11,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import sickbeard
 
@@ -25,7 +26,7 @@ from sickrage.helper.exceptions import CantRefreshShowException, CantRemoveShowE
 from sickrage.helper.exceptions import MultipleShowObjectsException
 
 
-class Show:
+class Show(object):
     def __init__(self):
         pass
 
@@ -45,10 +46,11 @@ class Show:
         if error is not None:
             return error, show
 
-        try:
-            sickbeard.showQueueScheduler.action.removeShow(show, bool(remove_files))
-        except CantRemoveShowException as exception:
-            return ex(exception), show
+        if show:
+            try:
+                sickbeard.showQueueScheduler.action.removeShow(show, bool(remove_files))
+            except CantRemoveShowException as exception:
+                return ex(exception), show
 
         return None, show
 

@@ -33,12 +33,12 @@
             <div id="config-components">
 
                 <ul>
-                    <li><a href="#core-component-group1">Misc</a></li>
-                    <li><a href="#core-component-group2">Interface</a></li>
-                    <li><a href="#core-component-group3">Advanced Settings</a></li>
+                    <li><a href="#misc">Misc</a></li>
+                    <li><a href="#interface">Interface</a></li>
+                    <li><a href="#advanced-settings">Advanced Settings</a></li>
                 </ul>
 
-                <div id="core-component-group1">
+                <div id="misc">
                 <div class="component-group">
 
                     <div class="component-group-desc">
@@ -84,10 +84,11 @@
                         </div>
                         <div class="field-pair">
                             <label for="showupdate_hour">
-                                <span class="component-title">When to update shows</span>
+                                <span class="component-title">Choose hour to update shows</span>
                                 <span class="component-desc">
-                                    <input type="text" name="showupdate_hour" id="showupdate_hour" value="${sickbeard.SHOWUPDATE_HOUR}" class="form-control input-sm input75" autocapitalize="off" />
-                                    <p>with information such as next air dates, show ended, etc. Use 15 for 3pm, 4 for 4am etc. Anything over 23 or under 0 will be set to 0 (12am)</p>
+                                    <input type="number" min="0" max="23" step="1" name="showupdate_hour" id="showupdate_hour" value="${sickbeard.SHOWUPDATE_HOUR}" class="form-control input-sm input75" autocapitalize="off" />
+                                    <p>with information such as next air dates, show ended, etc. Use 15 for 3pm, 4 for 4am etc.</p>
+                                    <p>Note: minutes are randomized each time SickRage is started</p>
                                 </span>
                             </label>
                         </div>
@@ -120,7 +121,7 @@
                             <label for="log_nr">
                                 <span class="component-title">Number of Log files saved</span>
                                 <span class="component-desc">
-                                    <input type="text" name="log_nr" id="log_nr" value="${sickbeard.LOG_NR}" class="form-control input-sm input75" autocapitalize="off" />
+                                    <input type="number" min="1" step="1" name="log_nr" id="log_nr" value="${sickbeard.LOG_NR}" class="form-control input-sm input75" autocapitalize="off" />
                                     <p>number of log files saved when rotating logs (default: 5) (REQUIRES RESTART)</p>
                                 </span>
                             </label>
@@ -130,8 +131,8 @@
                             <label for="log_size">
                                 <span class="component-title">Size of Log files saved</span>
                                 <span class="component-desc">
-                                    <input type="text" name="log_size" id="log_size" value="${sickbeard.LOG_SIZE}" class="form-control input-sm input75" autocapitalize="off" />
-                                    <p>maximum size of a log file saved (default: 1048576 (1MB)) (REQUIRES RESTART)</p>
+                                    <input type="number" min="0.5" step="0.1" name="log_size" id="log_size" value="${sickbeard.LOG_SIZE}" class="form-control input-sm input75" autocapitalize="off" />
+                                    <p>maximum size in MB of the log file (default: 1MB) (REQUIRES RESTART)</p>
                                 </span>
                             </label>
                         </div>
@@ -155,8 +156,8 @@
                             <label for="indexer_timeout">
                                 <span class="component-title">Timeout show indexer at</span>
                                 <span class="component-desc">
-                                    <input type="text" name="indexer_timeout" id="indexer_timeout" value="${sickbeard.INDEXER_TIMEOUT}" class="form-control input-sm input75" autocapitalize="off" />
-                                    <p>seconds of inactivity when finding new shows (default:10)</p>
+                                    <input type="number" min="10" step="1" name="indexer_timeout" id="indexer_timeout" value="${sickbeard.INDEXER_TIMEOUT}" class="form-control input-sm input75" autocapitalize="off" />
+                                    <p>seconds of inactivity when finding new shows (default:20)</p>
                                 </span>
                             </label>
                         </div>
@@ -208,8 +209,8 @@
                             <label>
                                 <span class="component-title">Check the server every*</span>
                                 <span class="component-desc">
-                                    <input type="text" name="update_frequency" id="update_frequency" value="${sickbeard.UPDATE_FREQUENCY}" class="form-control input-sm input75" autocapitalize="off" />
-                                    <p>hours for software updates (default:12)</p>
+                                    <input type="number" min="1" step="1" name="update_frequency" id="update_frequency" value="${sickbeard.UPDATE_FREQUENCY}" class="form-control input-sm input75" autocapitalize="off" />
+                                    <p>hours for software updates (default:1)</p>
                                 </span>
                             </label>
                         </div>
@@ -231,7 +232,7 @@
                 </div><!-- /component-group1 //-->
 
 
-                <div id="core-component-group2">
+                <div id="interface">
                 <div class="component-group">
 
                     <div class="component-group-desc">
@@ -425,8 +426,18 @@
                             <label for="web_port">
                                 <span class="component-title">HTTP port</span>
                                 <span class="component-desc">
-                                    <input type="text" name="web_port" id="web_port" value="${sickbeard.WEB_PORT}" class="form-control input-sm input100" autocapitalize="off" />
+                                    <input type="number" min="1" step="1" name="web_port" id="web_port" value="${sickbeard.WEB_PORT}" class="form-control input-sm input100" autocapitalize="off" />
                                     <p>web port to browse and access SickRage (default:8081)</p>
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="field-pair">
+                            <label for="notify_on_login">
+                                <span class="component-title">Notify on login</span>
+                                <span class="component-desc">
+                                    <input type="checkbox" name="notify_on_login" class="enabler" id="notify_on_login" ${('', 'checked="checked"')[bool(sickbeard.NOTIFY_ON_LOGIN)]}/>
+                                    <p>enable to be notified when a new login happens in webserver</p>
                                 </span>
                             </label>
                         </div>
@@ -489,7 +500,7 @@
                 </div>
 
 
-                <div id="core-component-group3" class="component-group">
+                <div id="advanced-settings" class="component-group">
 
                 <div class="component-group">
 
@@ -740,17 +751,6 @@
                                 </span>
                             </label>
                         </div>
-
-                        <div class="field-pair" hidden>
-                            <label for="git_autoissues">
-                                <span class="component-title">Git auto-issues submit</span>
-                                <span class="component-desc">
-                                    <input type="checkbox" name="git_autoissues" id="git_autoissues" ${('', 'checked="checked"')[bool(sickbeard.GIT_AUTOISSUES)]} disable/>
-                                    <p>automatically submit bug/issue reports to our issue tracker when errors are logged</p>
-                                </span>
-                            </label>
-                        </div>
-
                         <input type="submit" class="btn config_submitter" value="Save Changes" />
                     </fieldset>
 

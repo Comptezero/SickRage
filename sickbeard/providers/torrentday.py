@@ -1,4 +1,7 @@
+# coding=utf-8
 # Author: Mr_Orange <mr_orange@hotmail.it>
+#
+# URL: https://sickrage.github.io
 #
 # This file is part of SickRage.
 #
@@ -9,64 +12,71 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import re
-import requests
-from sickbeard import logger
-from sickbeard import tvcache
-from sickbeard.providers import generic
+from requests.compat import urljoin
+from requests.utils import add_dict_to_cookiejar, dict_from_cookiejar
 
-class TorrentDayProvider(generic.TorrentProvider):
+from sickbeard import logger, tvcache
+
+from sickrage.helper.common import convert_size, try_int
+from sickrage.providers.torrent.TorrentProvider import TorrentProvider
+
+
+class TorrentDayProvider(TorrentProvider):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
 
-        generic.TorrentProvider.__init__(self, "TorrentDay")
+        # Provider Init
+        TorrentProvider.__init__(self, "TorrentDay")
 
-
-
-        self._uid = None
-        self._hash = None
+        # Credentials
         self.username = None
         self.password = None
-        self.ratio = None
-        self.freeleech = False
+        self._uid = None
+        self._hash = None
+
+        # Torrent Stats
         self.minseed = None
         self.minleech = None
+        self.freeleech = False
 
-        self.cache = TorrentDayCache(self)
-
-        self.urls = {'base_url': 'https://classic.torrentday.com',
-                     'login': 'https://classic.torrentday.com/torrents/',
-                     'search': 'https://classic.torrentday.com/V3/API/API.php',
-                     'download': 'https://classic.torrentday.com/download.php/%s/%s'}
-
-        self.url = self.urls['base_url']
+        # URLs
+        self.url = 'https://classic.torrentday.com'
+        self.urls = {
+            'login': urljoin(self.url, '/torrents/'),
+            'search': urljoin(self.url, '/V3/API/API.php'),
+            'download': urljoin(self.url, '/download.php/')
+        }
 
         self.cookies = None
-
         self.categories = {'Season': {'c14': 1}, 'Episode': {'c2': 1, 'c26': 1, 'c7': 1, 'c24': 1},
                            'RSS': {'c2': 1, 'c26': 1, 'c7': 1, 'c24': 1, 'c14': 1}}
 
-    def _doLogin(self):
+        # Cache
+        self.cache = tvcache.TVCache(self, min_time=10)  # Only poll IPTorrents every 10 minutes max
 
-        if any(requests.utils.dict_from_cookiejar(self.session.cookies).values()):
+    def login(self):
+        if any(dict_from_cookiejar(self.session.cookies).values()):
             return True
 
         if self._uid and self._hash:
-            requests.utils.add_dict_to_cookiejar(self.session.cookies, self.cookies)
+            add_dict_to_cookiejar(self.session.cookies, self.cookies)
         else:
 
-            login_params = {'username': self.username,
-                            'password': self.password,
-                            'submit.x': 0,
-                            'submit.y': 0}
+            login_params = {
+                'username': self.username,
+                'password': self.password,
+                'submit.x': 0,
+                'submit.y': 0
+            }
 
-            response = self.getURL(self.urls['login'], post_data=login_params, timeout=30)
+            response = self.get_url(self.urls['login'], post_data=login_params, returns='text')
             if not response:
                 logger.log(u"Unable to connect to provider", logger.WARNING)
                 return False
@@ -76,10 +86,9 @@ class TorrentDayProvider(generic.TorrentProvider):
                 return False
 
             try:
-                if requests.utils.dict_from_cookiejar(self.session.cookies)['uid'] and requests.utils.dict_from_cookiejar(self.session.cookies)['pass']:
-                    self._uid = requests.utils.dict_from_cookiejar(self.session.cookies)['uid']
-                    self._hash = requests.utils.dict_from_cookiejar(self.session.cookies)['pass']
-
+                if dict_from_cookiejar(self.session.cookies)['uid'] and dict_from_cookiejar(self.session.cookies)['pass']:
+                    self._uid = dict_from_cookiejar(self.session.cookies)['uid']
+                    self._hash = dict_from_cookiejar(self.session.cookies)['pass']
                     self.cookies = {'uid': self._uid,
                                     'pass': self._hash}
                     return True
@@ -89,20 +98,19 @@ class TorrentDayProvider(generic.TorrentProvider):
             logger.log(u"Unable to obtain cookie", logger.WARNING)
             return False
 
-    def _doSearch(self, search_params, search_mode='eponly', epcount=0, age=0, epObj=None):
-
+    def search(self, search_params, age=0, ep_obj=None):  # pylint: disable=too-many-locals
         results = []
-        items = {'Season': [], 'Episode': [], 'RSS': []}
-
-        if not self._doLogin():
+        if not self.login():
             return results
 
-        for mode in search_params.keys():
-            logger.log(u"Search Mode: %s" % mode, logger.DEBUG)
+        for mode in search_params:
+            items = []
+            logger.log(u"Search Mode: {}".format(mode), logger.DEBUG)
             for search_string in search_params[mode]:
 
                 if mode != 'RSS':
-                    logger.log(u"Search string: %s " % search_string, logger.DEBUG)
+                    logger.log(u"Search string: {}".format(search_string.decode("utf-8")),
+                               logger.DEBUG)
 
                 search_string = '+'.join(search_string.split())
 
@@ -112,7 +120,7 @@ class TorrentDayProvider(generic.TorrentProvider):
                 if self.freeleech:
                     post_data.update({'free': 'on'})
 
-                parsedJSON = self.getURL(self.urls['search'], post_data=post_data, json=True)
+                parsedJSON = self.get_url(self.urls['search'], post_data=post_data, returns='json')
                 if not parsedJSON:
                     logger.log(u"No data returned from provider", logger.DEBUG)
                     continue
@@ -125,49 +133,37 @@ class TorrentDayProvider(generic.TorrentProvider):
 
                 for torrent in torrents:
 
-                    title = re.sub(r"\[.*\=.*\].*\[/.*\]", "", torrent['name'])
-                    download_url = self.urls['download'] % ( torrent['id'], torrent['fname'])
-                    seeders = int(torrent['seed'])
-                    leechers = int(torrent['leech'])
-                    # FIXME
-                    size = -1
+                    title = re.sub(r"\[.*\=.*\].*\[/.*\]", "", torrent['name']) if torrent['name'] else None
+                    download_url = urljoin(self.urls['download'], '{}/{}'.format(torrent['id'], torrent['fname'])) if torrent['id'] and torrent['fname'] else None
 
                     if not all([title, download_url]):
                         continue
 
+                    seeders = int(torrent['seed']) if torrent['seed'] else 1
+                    leechers = int(torrent['leech']) if torrent['leech'] else 0
+
                     # Filter unseeded torrent
                     if seeders < self.minseed or leechers < self.minleech:
                         if mode != 'RSS':
-                            logger.log(u"Discarding torrent because it doesn't meet the minimum seeders or leechers: {0} (S:{1} L:{2})".format(title, seeders, leechers), logger.DEBUG)
+                            logger.log(u"Discarding torrent because it doesn't meet the minimum seeders or leechers: {} (S:{} L:{})".format(title, seeders, leechers), logger.DEBUG)
                         continue
 
-                    item = title, download_url, size, seeders, leechers
+                    torrent_size = torrent['size']
+                    size = convert_size(torrent_size) or -1
+
+                    item = {'title': title, 'link': download_url, 'size': size, 'seeders': seeders, 'leechers': leechers, 'hash': None}
+
                     if mode != 'RSS':
-                        logger.log(u"Found result: %s " % title, logger.DEBUG)
+                        logger.log(u"Found result: {} with {} seeders and {} leechers".format
+                                   (title, seeders, leechers), logger.DEBUG)
 
-                    items[mode].append(item)
+                    items.append(item)
 
-            # For each search mode sort all the items by seeders if available if available
-            items[mode].sort(key=lambda tup: tup[3], reverse=True)
-
-            results += items[mode]
+            # For each search mode sort all the items by seeders if available
+            items.sort(key=lambda d: try_int(d.get('seeders', 0)), reverse=True)
+            results += items
 
         return results
 
-    def seedRatio(self):
-        return self.ratio
-
-
-class TorrentDayCache(tvcache.TVCache):
-    def __init__(self, provider_obj):
-
-        tvcache.TVCache.__init__(self, provider_obj)
-
-        # Only poll IPTorrents every 10 minutes max
-        self.minTime = 10
-
-    def _getRSSData(self):
-        search_params = {'RSS': ['']}
-        return {'entries': self.provider._doSearch(search_params)}
 
 provider = TorrentDayProvider()

@@ -1,3 +1,4 @@
+# coding=utf-8
 # This file is part of SickRage.
 #
 # URL: https://sickrage.github.io
@@ -10,14 +11,17 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
+
+from __future__ import unicode_literals
 
 import re
 import sickbeard
+from fnmatch import fnmatch
 
 dateFormat = '%Y-%m-%d'
 dateTimeFormat = '%Y-%m-%d %H:%M:%S'
@@ -89,13 +93,13 @@ http_status_code = {
     509: 'Bandwidth Limit Exceeded',
     510: 'Not Extended',
     511: 'Network Authentication Required',
-    520: 'Cloudfare - Web server is returning an unknown error',
-    521: 'Cloudfare - Web server is down',
-    522: 'Cloudfare - Connection timed out',
-    523: 'Cloudfare - Origin is unreachable',
-    524: 'Cloudfare - A timeout occurred',
-    525: 'Cloudfare - SSL handshake failed',
-    526: 'Cloudfare - Invalid SSL certificate',
+    520: 'CloudFlare - Web server is returning an unknown error',
+    521: 'CloudFlare - Web server is down',
+    522: 'CloudFlare - Connection timed out',
+    523: 'CloudFlare - Origin is unreachable',
+    524: 'CloudFlare - A timeout occurred',
+    525: 'CloudFlare - SSL handshake failed',
+    526: 'CloudFlare - Invalid SSL certificate',
     598: 'Network read timeout error',
     599: 'Network connect timeout error',
 }
@@ -114,18 +118,12 @@ def http_code_description(http_code):
     :return: The description of the provided ``http_code``
     """
 
-    if http_code in http_status_code:
-        description = http_status_code[http_code]
+    description = http_status_code.get(try_int(http_code), None)
 
-        if isinstance(description, list):
-            return '(%s)' % ', '.join(description)
+    if isinstance(description, list):
+        return '(%s)' % ', '.join(description)
 
-        return description
-
-    # TODO Restore logger import
-    # logger.log(u'Unknown HTTP status code %s. Please submit an issue' % http_code, logger.ERROR)
-
-    return None
+    return description
 
 
 def is_sync_file(filename):
@@ -138,7 +136,9 @@ def is_sync_file(filename):
     if isinstance(filename, (str, unicode)):
         extension = filename.rpartition('.')[2].lower()
 
-        return extension in sickbeard.SYNC_FILES.split(',') or filename.startswith('.syncthing')
+        return extension in sickbeard.SYNC_FILES.split(',') or \
+            filename.startswith('.syncthing') or \
+            any(fnmatch(filename, match) for match in sickbeard.SYNC_FILES.split(','))
 
     return False
 
@@ -156,26 +156,83 @@ def is_torrent_or_nzb_file(filename):
     return filename.rpartition('.')[2].lower() in ['nzb', 'torrent']
 
 
-def pretty_file_size(size):
+def pretty_file_size(size, use_decimal=False, **kwargs):
     """
     Return a human readable representation of the provided ``size``.
+
     :param size: The size to convert
+    :param use_decimal: use decimal instead of binary prefixes (e.g. kilo = 1000 instead of 1024)
+
+    :keyword units: A list of unit names in ascending order. Default units: ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+
     :return: The converted size
     """
-    if isinstance(size, (str, unicode)) and size.isdigit():
-        size = float(size)
-    elif not isinstance(size, (int, long, float)):
-        return ''
+    try:
+        size = max(float(size), 0.)
+    except (ValueError, TypeError):
+        size = 0.
 
     remaining_size = size
-
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB', 'PB']:
-        if remaining_size < 1024.:
+    units = kwargs.pop('units', ['B', 'KB', 'MB', 'GB', 'TB', 'PB'])
+    block = 1024. if not use_decimal else 1000.
+    for unit in units:
+        if remaining_size < block:
             return '%3.2f %s' % (remaining_size, unit)
-
-        remaining_size /= 1024.
-
+        remaining_size /= block
     return size
+
+
+def convert_size(size, default=None, use_decimal=False, **kwargs):
+    """
+    Convert a file size into the number of bytes
+
+    :param size: to be converted
+    :param default: value to return if conversion fails
+    :param use_decimal: use decimal instead of binary prefixes (e.g. kilo = 1000 instead of 1024)
+
+    :keyword sep: Separator between size and units, default is space
+    :keyword units: A list of (uppercase) unit names in ascending order. Default units: ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+    :keyword default_units: Default unit if none is given, default is lowest unit in the scale, e.g. bytes
+
+    :returns: the number of bytes, the default value, or 0
+    """
+    result = None
+
+    try:
+        sep = kwargs.pop('sep', ' ')
+        scale = kwargs.pop('units', ['B', 'KB', 'MB', 'GB', 'TB', 'PB'])
+        default_units = kwargs.pop('default_units', scale[0])
+
+        if sep:
+            size_tuple = size.strip().split(sep)
+            scalar, units = size_tuple[0], size_tuple[1:]
+            units = units[0].upper() if units else default_units
+        else:
+            regex_units = re.search(r'(\w+)', size, re.IGNORECASE)
+            units = regex_units.group() if regex_units else default_units
+            scalar = size.strip(units)
+
+        scalar = float(scalar)
+        scalar *= (1024 if not use_decimal else 1000) ** scale.index(units)
+
+        result = scalar
+
+    # TODO: Make sure fallback methods obey default units
+    except AttributeError:
+        result = size if size is not None else default
+
+    except ValueError:
+        result = default
+
+    finally:
+        try:
+            if result != default:
+                result = long(result)
+                result = max(result, 0)
+        except (TypeError, ValueError):
+            pass
+
+    return result
 
 
 def remove_extension(filename):
@@ -187,8 +244,7 @@ def remove_extension(filename):
     """
 
     if isinstance(filename, (str, unicode)) and '.' in filename:
-        # pylint: disable=W0612
-        basename, separator, extension = filename.rpartition('.')  # @UnusedVariable
+        basename, _, extension = filename.rpartition('.')
 
         if basename and extension.lower() in ['nzb', 'torrent'] + media_extensions:
             return basename
@@ -205,8 +261,7 @@ def replace_extension(filename, new_extension):
     """
 
     if isinstance(filename, (str, unicode)) and '.' in filename:
-        # pylint: disable=W0612
-        basename, separator, extension = filename.rpartition('.')  # @UnusedVariable
+        basename, _, _ = filename.rpartition('.')
 
         if basename:
             return '%s.%s' % (basename, new_extension)
@@ -224,7 +279,7 @@ def sanitize_filename(filename):
     if isinstance(filename, (str, unicode)):
         filename = re.sub(r'[\\/\*]', '-', filename)
         filename = re.sub(r'[:"<>|?]', '', filename)
-        filename = re.sub(ur'\u2122', '', filename)  # Trade Mark Sign
+        filename = re.sub(r'™', '', filename)  # Trade Mark Sign unicode: \u2122
         filename = filename.strip(' .')
 
         return filename
@@ -242,5 +297,25 @@ def try_int(candidate, default_value=0):
 
     try:
         return int(candidate)
-    except Exception:
+    except (ValueError, TypeError):
         return default_value
+
+
+def episode_num(season=None, episode=None, **kwargs):
+    """
+    Convert season and episode into string
+
+    :param season: Season number
+    :param episode: Episode Number
+    :keyword numbering: Absolute for absolute numbering
+    :returns: a string in s01e01 format or absolute numbering
+    """
+
+    numbering = kwargs.pop('numbering', 'standard')
+
+    if numbering == 'standard':
+        if season is not None and episode:
+            return 'S{0:0>2}E{1:02}'.format(season, episode)
+    elif numbering == 'absolute':
+        if not (season and episode) and (season or episode):
+            return '{0:0>3}'.format(season or episode)

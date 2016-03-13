@@ -13,11 +13,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 
 import io
@@ -183,9 +183,9 @@ class TIVOMetadata(generic.GenericMetadata):
 
             t = sickbeard.indexerApi(ep_obj.show.indexer).indexer(**lINDEXER_API_PARMS)
             myShow = t[ep_obj.show.indexerid]
-        except sickbeard.indexer_shownotfound, e:
+        except sickbeard.indexer_shownotfound as e:
             raise ShowNotFoundException(str(e))
-        except sickbeard.indexer_error, e:
+        except sickbeard.indexer_error as e:
             logger.log(u"Unable to connect to " + sickbeard.indexerApi(
                 ep_obj.show.indexer).name + " while creating meta files - skipping - " + str(e), logger.ERROR)
             return False
@@ -321,13 +321,13 @@ class TIVOMetadata(generic.GenericMetadata):
 
             logger.log(u"Writing episode nfo file to " + nfo_file_path, logger.DEBUG)
 
-            with io.open(nfo_file_path, 'w') as nfo_file:
+            with io.open(nfo_file_path, 'wb') as nfo_file:
                 # Calling encode directly, b/c often descriptions have wonky characters.
                 nfo_file.write(data.encode("utf-8"))
 
             helpers.chmodAsParent(nfo_file_path)
 
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             logger.log(u"Unable to write file to " + nfo_file_path + " - are you sure the folder is writable? " + ex(e),
                        logger.ERROR)
             return False

@@ -12,17 +12,17 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 import socket
 from httplib import HTTPSConnection, HTTPException
-from urllib import urlencode
+from requests.compat import urlencode
 
 try:
     # this only exists in 2.6
@@ -39,7 +39,8 @@ import ast
 from sickbeard import logger, common, db
 from sickrage.helper.encoding import ss
 
-class ProwlNotifier(object):
+
+class Notifier(object):
     def test_notify(self, prowl_api, prowl_priority):
         return self._send_prowl(prowl_api, prowl_priority, event="Test", message="Testing Prowl settings from SickRage", force=True)
 
@@ -53,7 +54,7 @@ class ProwlNotifier(object):
             else:
                 for api in recipients:
                     self._send_prowl(prowl_api=api, prowl_priority=None, event=common.notifyStrings[common.NOTIFY_SNATCH],
-                                     message=ep_name+" :: "+time.strftime(sickbeard.DATE_PRESET+" "+sickbeard.TIME_PRESET))
+                                     message=ep_name + " :: " + time.strftime(sickbeard.DATE_PRESET + " " + sickbeard.TIME_PRESET))
 
     def notify_download(self, ep_name):
         ep_name = ss(ep_name)
@@ -65,7 +66,7 @@ class ProwlNotifier(object):
             else:
                 for api in recipients:
                     self._send_prowl(prowl_api=api, prowl_priority=None, event=common.notifyStrings[common.NOTIFY_DOWNLOAD],
-                                     message=ep_name+" :: "+time.strftime(sickbeard.DATE_PRESET+" "+sickbeard.TIME_PRESET))
+                                     message=ep_name + " :: " + time.strftime(sickbeard.DATE_PRESET + " " + sickbeard.TIME_PRESET))
 
     def notify_subtitle_download(self, ep_name, lang):
         ep_name = ss(ep_name)
@@ -77,7 +78,7 @@ class ProwlNotifier(object):
             else:
                 for api in recipients:
                     self._send_prowl(prowl_api=api, prowl_priority=None, event=common.notifyStrings[common.NOTIFY_SUBTITLE_DOWNLOAD],
-                                     message=ep_name+" ["+lang+"] :: "+time.strftime(sickbeard.DATE_PRESET+" "+sickbeard.TIME_PRESET))
+                                     message=ep_name + " [" + lang + "] :: " + time.strftime(sickbeard.DATE_PRESET + " " + sickbeard.TIME_PRESET))
 
     def notify_git_update(self, new_version="??"):
         if sickbeard.USE_PROWL:
@@ -86,6 +87,12 @@ class ProwlNotifier(object):
             self._send_prowl(prowl_api=None, prowl_priority=None,
                              event=title, message=update_text + new_version)
 
+    def notify_login(self, ipaddress=""):
+        if sickbeard.USE_PROWL:
+            update_text = common.notifyStrings[common.NOTIFY_LOGIN_TEXT]
+            title = common.notifyStrings[common.NOTIFY_LOGIN]
+            self._send_prowl(prowl_api=None, prowl_priority=None,
+                             event=title, message=update_text.format(ipaddress))
 
     @staticmethod
     def _generate_recipients(show=None):
@@ -169,5 +176,3 @@ class ProwlNotifier(object):
         titles.sort(key=len, reverse=True)
         logger.log("TITLES: %s" % titles, logger.DEBUG)
         return titles
-
-notifier = ProwlNotifier

@@ -12,11 +12,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import urllib
 import urllib2
@@ -33,7 +33,7 @@ except ImportError:
     import xml.etree.ElementTree as etree
 
 
-class NMJNotifier(object):
+class Notifier(object):
     def notify_settings(self, host):
         """
         Retrieves the settings from a NMJ/Popcorn hour
@@ -101,6 +101,9 @@ class NMJNotifier(object):
         return False
         # Not implemented, no reason to start scanner.
 
+    def notify_login(self, ipaddress=""):
+        return False
+
     def test_notify(self, host, database, mount):
         return self._sendNMJ(host, database, mount)
 
@@ -121,13 +124,13 @@ class NMJNotifier(object):
                 req = urllib2.Request(mount)
                 logger.log(u"Try to mount network drive via url: %s" % mount, logger.DEBUG)
                 handle = urllib2.urlopen(req)
-            except IOError, e:
+            except IOError as e:
                 if hasattr(e, 'reason'):
                     logger.log(u"NMJ: Could not contact Popcorn Hour on host %s: %s" % (host, e.reason), logger.WARNING)
                 elif hasattr(e, 'code'):
                     logger.log(u"NMJ: Problem with Popcorn Hour on host %s: %s" % (host, e.code), logger.WARNING)
                 return False
-            except Exception, e:
+            except Exception as e:
                 logger.log(u"NMJ: Unknown exception: " + ex(e), logger.ERROR)
                 return False
 
@@ -148,13 +151,13 @@ class NMJNotifier(object):
             logger.log(u"Sending NMJ scan update command via url: %s" % updateUrl, logger.DEBUG)
             handle = urllib2.urlopen(req)
             response = handle.read()
-        except IOError, e:
+        except IOError as e:
             if hasattr(e, 'reason'):
                 logger.log(u"NMJ: Could not contact Popcorn Hour on host %s: %s" % (host, e.reason), logger.WARNING)
             elif hasattr(e, 'code'):
                 logger.log(u"NMJ: Problem with Popcorn Hour on host %s: %s" % (host, e.code), logger.WARNING)
             return False
-        except Exception, e:
+        except Exception as e:
             logger.log(u"NMJ: Unknown exception: " + ex(e), logger.ERROR)
             return False
 
@@ -162,7 +165,7 @@ class NMJNotifier(object):
         try:
             et = etree.fromstring(response)
             result = et.findtext("returnValue")
-        except SyntaxError, e:
+        except SyntaxError as e:
             logger.log(u"Unable to parse XML returned from the Popcorn Hour: %s" % e, logger.ERROR)
             return False
 
@@ -198,6 +201,3 @@ class NMJNotifier(object):
         logger.log(u"Sending scan command for NMJ ", logger.DEBUG)
 
         return self._sendNMJ(host, database, mount)
-
-
-notifier = NMJNotifier

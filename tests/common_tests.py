@@ -9,7 +9,7 @@ Classes:
         combineQualities
         splitQuality
         nameQuality
-        sceneQuality
+        scene_quality
         assumeQuality
         qualityFromFileMeta
         compositeStatus
@@ -58,7 +58,8 @@ class QualityStringTests(unittest.TestCase):
                   "Test.Show.S01E02 WEB-DL H 264-GROUP",
                   "Test.Show.S01E02_WEB-DL_H_264-GROUP",
                   "Test.Show.S01E02.WEB-DL.AAC2.0.H264-GROUP", ],
-        'sd_dvd': ["Test.Show.S01E02.DVDRiP.XViD-GROUP",
+        'sd_dvd': ["Test.Show.S01E02.480P.DVDrip.HEVC.X265",
+                   "Test.Show.S01E02.DVDRiP.XViD-GROUP",
                    "Test.Show.S01E02.DVDRiP.DiVX-GROUP",
                    "Test.Show.S01E02.DVDRiP.x264-GROUP",
                    "Test.Show.S01E02.DVDRip.WS.XViD-GROUP",
@@ -97,7 +98,9 @@ class QualityStringTests(unittest.TestCase):
                       "Test.Show.S01E02.720p.HDDVD.x264-GROUP", ],
         'full_hd_bluray': ["Test.Show.S01E02.1080p.BluRay.x264-GROUP",
                            "Test.Show.S01E02.1080p.HDDVD.x264-GROUP", ],
-        'unknown': ["Test.Show.S01E02-SiCKBEARD", ],
+        'unknown': ["Test.Show.S01E02-SiCKBEARD",
+                    "Test.Show.S01E01-20.1080i.[Mux.-.1080i.-.H264.-.Ac3.].HDTVMux.GROUP",
+                    ],
     }
 
     def test_sd_tv(self):
@@ -240,6 +243,40 @@ class QualityStringTests(unittest.TestCase):
                 else:
                     self.assertNotEqual(cur_qual, common.Quality.nameQuality(test))
 
+    def test_anime(self):
+        """
+        Test Anime against nameQuality
+        """
+        test_cases = {
+            'sd_dvd': [
+                '[DeadFish].Shingeki.no.Kyojin.-.01.-.OVA.[DVD][480p][AAC].mp4',
+            ],
+            'full_hd_bluray': [
+                '[Hatsuyuki-Kaitou]_Shingeki_no_Kyojin_-_Special_02_[BD_1080p][10bit][FLAC][4D908801].mkv',
+            ],
+        }
+        test_quality = {
+            'sd_tv': common.Quality.SDTV,
+            'sd_dvd': common.Quality.SDDVD,
+            'raw_hd_tv': common.Quality.RAWHDTV,
+            'hd_tv': common.Quality.HDTV,
+            'hd_web_dl': common.Quality.HDWEBDL,
+            'hd_bluray': common.Quality.HDBLURAY,
+            'full_hd_tv': common.Quality.FULLHDTV,
+            'full_hd_web_dl': common.Quality.FULLHDWEBDL,
+            'full_hd_bluray': common.Quality.FULLHDBLURAY,
+            'unknown': common.Quality.UNKNOWN,
+        }
+        for cur_test, expected_qual in test_quality.items():
+            for qual, tests in test_cases.items():
+                for name in tests:
+                    if qual == cur_test:
+                        self.assertEqual(expected_qual, common.Quality.nameQuality(name, anime=True),
+                                         (qual, name, expected_qual, common.Quality.nameQuality(name, anime=True)))
+                    else:
+                        self.assertNotEqual(expected_qual, common.Quality.nameQuality(name, anime=True),
+                                            (qual, name, expected_qual, common.Quality.nameQuality(name, anime=True)))
+
 
 class QualityTests(unittest.TestCase):
     """
@@ -301,7 +338,7 @@ class QualityTests(unittest.TestCase):
     @unittest.skip('Not yet implemented')
     def test_scene_quality(self):
         """
-        Test sceneQuality
+        Test scene_quality
         """
         pass
 

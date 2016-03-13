@@ -11,11 +11,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 """
 Test torrents
@@ -31,10 +31,9 @@ sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '../l
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from bs4 import BeautifulSoup
-from sickbeard.helpers import getURL
+from sickbeard.helpers import getURL, make_session
 from sickbeard.providers.bitcannon import BitCannonProvider
 from sickbeard.tv import TVEpisode, TVShow
-import requests  # pylint: disable=import-error
 import tests.test_lib as test
 import urlparse
 
@@ -69,7 +68,7 @@ class TorrentBasicTests(test.SickbeardTestDBCase):
             # pylint: disable=protected-access
             search_strings_list = bitcannon._get_episode_search_strings(self.shows[0].episodes[0])  # [{'Episode': ['Italian Works S05E10']}]
             for search_strings in search_strings_list:
-                bitcannon._doSearch(search_strings)   # {'Episode': ['Italian Works S05E10']} # pylint: disable=protected-access
+                bitcannon.search(search_strings)   # {'Episode': ['Italian Works S05E10']} # pylint: disable=protected-access
 
         return True
 
@@ -81,11 +80,11 @@ class TorrentBasicTests(test.SickbeardTestDBCase):
         url = 'http://kickass.to/'
         search_url = 'http://kickass.to/usearch/American%20Dad%21%20S08%20-S08E%20category%3Atv/?field=seeders&sorder=desc'
 
-        html = getURL(search_url, session=requests.Session())
+        html = getURL(search_url, session=make_session(), returns='text')
         if not html:
             return
 
-        soup = BeautifulSoup(html, features=["html5lib", "permissive"])
+        soup = BeautifulSoup(html, 'html5lib')
 
         torrent_table = soup.find('table', attrs={'class': 'data'})
         torrent_rows = torrent_table.find_all('tr') if torrent_table else []

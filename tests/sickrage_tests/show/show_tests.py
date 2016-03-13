@@ -11,11 +11,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 """
 Test shows
@@ -50,6 +50,8 @@ class ShowTests(unittest.TestCase):
         Test find
         """
         sickbeard.QUALITY_DEFAULT = Quality.FULLHDTV
+
+        sickbeard.showList = []
 
         show123 = TestTVShow(0, 123)
         show456 = TestTVShow(0, 456)
@@ -95,6 +97,8 @@ class ShowTests(unittest.TestCase):
         """
         sickbeard.QUALITY_DEFAULT = Quality.FULLHDTV
 
+        sickbeard.showList = []
+
         show123 = TestTVShow(0, 123)
         show456 = TestTVShow(0, 456)
         show789 = TestTVShow(0, 789)
@@ -133,11 +137,9 @@ class TestTVShow(TVShow):
     def __init__(self, indexer, indexer_id):
         super(TestTVShow, self).__init__(indexer, indexer_id)
 
-    def loadFromDB(self, skip_nfo=False):
+    def loadFromDB(self):
         """
         Override TVShow.loadFromDB to avoid DB access during testing
-
-        :param skip_nfo: ...not used
         """
         pass
 

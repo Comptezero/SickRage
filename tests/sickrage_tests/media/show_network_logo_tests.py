@@ -11,11 +11,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 """
 Test ShowNetworkLogo
@@ -43,7 +43,7 @@ class ShowNetworkLogoTests(GenericMediaTests):
         Test get_default_media_name
         """
 
-        self.assertEqual(ShowNetworkLogo(0, '').get_default_media_name(), 'network/nonetwork.png')
+        self.assertEqual(ShowNetworkLogo(0, '').get_default_media_name(), os.path.join('network', 'nonetwork.png'))
 
 
 if __name__ == '__main__':

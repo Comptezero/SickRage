@@ -1,8 +1,7 @@
 # coding=utf-8
 # Author: Jodi Jones <venom@gen-x.co.nz>
-# URL: http://code.google.com/p/sickbeard/
-# Rewrite: Gonçalo <matigonkas@outlook.com>
-# URL: https://github.com/SickRage/SickRage
+# Rewrite: Gonçalo M. (aka duramato/supergonkas) <supergonkas@gmail.com>
+# URL: https://sickrage.github.io
 #
 # This file is part of SickRage.
 #
@@ -13,109 +12,94 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
+
+from __future__ import unicode_literals
+
+from sickbeard import logger, tvcache
+
+from sickrage.helper.common import convert_size
+from sickrage.providers.torrent.TorrentProvider import TorrentProvider
 
 
-from sickbeard.providers import generic
-from urllib import urlencode
-from sickbeard import logger
-from sickbeard import tvcache
-
-
-class BTDIGGProvider(generic.TorrentProvider):
+class BTDiggProvider(TorrentProvider):
 
     def __init__(self):
-        generic.TorrentProvider.__init__(self, "BTDigg")
+
+        TorrentProvider.__init__(self, "BTDigg")
 
         self.public = True
-        self.ratio = 0
-        self.urls = {'url': u'https://btdigg.org/',
-                     'api': u'https://api.btdigg.org/api/private-341ada3245790954/s02'}
+        self.url = "https://btdigg.org"
+        self.urls = {"api": "https://api.btdigg.org/api/private-341ada3245790954/s02"}
 
-        self.proper_strings = ['PROPER', 'REPACK']
+        self.proper_strings = ["PROPER", "REPACK"]
 
-        self.url = self.urls['url']
+        # Use this hacky way for RSS search since most results will use this codecs
+        cache_params = {"RSS": ["x264", "x264.HDTV", "720.HDTV.x264"]}
 
-        # Unsupported
-        # self.minseed = 1
-        # self.minleech = 0
+        # Only poll BTDigg every 30 minutes max, since BTDigg takes some time to crawl
+        self.cache = tvcache.TVCache(self, min_time=30, search_params=cache_params)
 
-        self.cache = BTDiggCache(self)
-
-    def _doSearch(self, search_strings, search_mode='eponly', epcount=0, age=0, epObj=None):
-
+    def search(self, search_strings, age=0, ep_obj=None):  # pylint: disable=too-many-locals
         results = []
-        items = {'Season': [], 'Episode': [], 'RSS': []}
-        search_params = {'p': 1}
-
-        for mode in search_strings.keys():
-            logger.log(u"Search Mode: %s" % mode, logger.DEBUG)
+        search_params = {"p": 0}
+        for mode in search_strings:
+            items = []
+            logger.log("Search Mode: {}".format(mode), logger.DEBUG)
             for search_string in search_strings[mode]:
+                search_params["q"] = search_string
+                if mode != "RSS":
+                    search_params["order"] = 0
+                    logger.log("Search string: {}".format(search_string.decode("utf-8")),
+                               logger.DEBUG)
+                else:
+                    search_params["order"] = 2
 
-                if mode != 'RSS':
-                    logger.log(u"Search string: %s" % search_string, logger.DEBUG)
-
-                search_params['q'] = search_string.encode('utf-8')
-                search_params['order'] = '1' if mode != 'RSS' else '2'
-
-                searchURL = self.urls['api'] + '?' + urlencode(search_params)
-                logger.log(u"Search URL: %s" %  searchURL, logger.DEBUG)
-
-                jdata = self.getURL(searchURL, json=True)
+                jdata = self.get_url(self.urls["api"], params=search_params, returns="json")
                 if not jdata:
-                    logger.log(u"No data returned to be parsed!!!")
-                    return []
+                    logger.log("Provider did not return data", logger.DEBUG)
+                    continue
 
                 for torrent in jdata:
-                    if not torrent['ff']:
-                        title = torrent['name']
-                        download_url = torrent['magnet'] + self._custom_trackers
-                        size = torrent['size']
-                        # FIXME
-                        seeders = 1
-                        leechers = 0
-
+                    try:
+                        title = torrent.pop("name", "")
+                        download_url = torrent.pop("magnet") + self._custom_trackers if torrent["magnet"] else None
                         if not all([title, download_url]):
                             continue
 
-                        # Filter unseeded torrent (Unsupported)
-                        # if seeders < self.minseed or leechers < self.minleech:
-                        #    if mode != 'RSS':
-                        #        logger.log(u"Discarding torrent because it doesn't meet the minimum seeders or leechers: {0} (S:{1} L:{2})".format(title, seeders, leechers), logger.DEBUG)
-                        #    continue
+                        if float(torrent.pop("ff")):
+                            logger.log("Ignoring result for {} since it's been reported as fake (level = {})".format
+                                       (title, torrent["ff"]), logger.DEBUG)
+                            continue
 
-                        item = title, download_url, size, seeders, leechers
-                        if mode != 'RSS':
-                            logger.log(u"Found result: %s" % title, logger.DEBUG)
+                        if not int(torrent.pop("files")):
+                            logger.log("Ignoring result for {} because it has no files".format
+                                       (title), logger.DEBUG)
+                            continue
 
-                        items[mode].append(item)
+                        # Provider doesn't provide seeders/leechers
+                        seeders = 1
+                        leechers = 0
 
-            # For each search mode sort all the items by seeders if available (Unsupported)
-            # items[mode].sort(key=lambda tup: tup[3], reverse=True)
+                        torrent_size = torrent.pop("size")
+                        size = convert_size(torrent_size) or -1
 
-            results += items[mode]
+                        item = {'title': title, 'link': download_url, 'size': size, 'seeders': seeders, 'leechers': leechers, 'hash': None}
+                        if mode != "RSS":
+                            logger.log("Found result: %s " % title, logger.DEBUG)
+
+                        items.append(item)
+
+                    except StandardError:
+                        continue
+
+            results += items
 
         return results
 
-    def seedRatio(self):
-        return self.ratio
 
-class BTDiggCache(tvcache.TVCache):
-    def __init__(self, provider_obj):
-
-        tvcache.TVCache.__init__(self, provider_obj)
-
-        # Cache results for a 30min ,since BTDigg takes some time to crawl
-        self.minTime = 30
-
-    def _getRSSData(self):
-
-        # Use this hacky way for RSS search since most results will use this codecs
-        search_params = {'RSS': ['x264', 'x264.HDTV', '720.HDTV.x264']}
-        return {'entries': self.provider._doSearch(search_params)}
-
-provider = BTDIGGProvider()
+provider = BTDiggProvider()

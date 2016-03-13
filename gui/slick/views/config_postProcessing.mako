@@ -23,11 +23,11 @@
         <form id="configForm" action="savePostProcessing" method="post">
             <div id="config-components">
                 <ul>
-                    <li><a href="#core-component-group1">Post-Processing</a></li>
-                    <li><a href="#core-component-group2">Episode Naming</a></li>
-                    <li><a href="#core-component-group3">Metadata</a></li>
+                    <li><a href="#post-processing">Post-Processing</a></li>
+                    <li><a href="#episode-naming">Episode Naming</a></li>
+                    <li><a href="#metadata">Metadata</a></li>
                 </ul>
-                <div id="core-component-group1" class="component-group">
+                <div id="post-processing" class="component-group">
                     <div class="component-group-desc">
                         <h3>Post-Processing</h3>
                         <p>Settings that dictate how SickRage should process completed downloads.</p>
@@ -41,7 +41,7 @@
                             </label>
                             <label class="nocheck" for="process_automatically">
                                 <span class="component-title">&nbsp;</span>
-                                <span class="component-desc"><b>NOTE:</b> Do not use if you use an external PostProcessing script</span>
+                                <span class="component-desc"><b>NOTE:</b> Do not use if you use an external Post Processing script</span>
                             </label>
                         </div>
                         <div class="field-pair">
@@ -82,7 +82,7 @@
                         <div class="field-pair">
                             <label class="nocheck">
                                 <span class="component-title">Auto Post-Processing Frequency</span>
-                                <input type="number" min="10" name="autopostprocesser_frequency" id="autopostprocesser_frequency" value="${sickbeard.AUTOPOSTPROCESSER_FREQUENCY}" class="form-control input-sm input75" />
+                                <input type="number" min="10" step="1" name="autopostprocesser_frequency" id="autopostprocesser_frequency" value="${sickbeard.AUTOPOSTPROCESSER_FREQUENCY}" class="form-control input-sm input75" />
                             </label>
                             <label class="nocheck">
                                 <span class="component-title">&nbsp;</span>
@@ -103,7 +103,7 @@
                             </label>
                             <label class="nocheck">
                                 <span class="component-title">&nbsp;</span>
-                                <span class="component-desc">comma seperated list of extensions SickRage ignores when Post Processing</span>
+                                <span class="component-desc">comma seperated list of extensions or filename globs SickRage ignores when Post Processing</span>
                             </label>
                         </div>
                         <div class="field-pair">
@@ -112,6 +112,8 @@
                                 <span class="component-title">Postpone if no subtitle</span>
                                 <span class="component-desc">Wait to process a file until subtitles are present</span>
                                 <span class="component-desc">Language names are allowed in subtitle filename (en.srt, pt-br.srt, ita.srt, etc.)</span>
+                                <span class="component-desc">&nbsp;</span>
+                                <span class="component-desc"><b>NOTE:</b> Automatic post processor must be disabled</span>
                             </label>
                         </div>
                         <div class="field-pair">
@@ -138,18 +140,18 @@
                         <div class="field-pair">
                             <input type="checkbox" name="move_associated_files" id="move_associated_files" ${('', 'checked="checked"')[bool(sickbeard.MOVE_ASSOCIATED_FILES)]}/>
                             <label for="move_associated_files">
-                                <span class="component-title">Move Associated Files</span>
-                                <span class="component-desc">Move srr/sfv/etc files with the episode when processed?</span>
+                                <span class="component-title">Delete associated files</span>
+                                <span class="component-desc">Delete srt/srr/sfv/etc files while post processing?</span>
                             </label>
                         </div>
                         <div class="field-pair">
                             <label class="nocheck">
-                                <span class="component-title">Allowed associated file extensions</span>
+                                <span class="component-title">Keep associated file extensions</span>
                                 <input type="text" name="allowed_extensions" id="allowed_extensions" value="${sickbeard.ALLOWED_EXTENSIONS}" class="form-control input-sm input350" autocapitalize="off" />
                             </label>
                             <label class="nocheck">
                                 <span class="component-title">&nbsp;</span>
-                                <span class="component-desc">Comma seperated list of associated file extensions SickRage should move while Post Processing. Leaving it empty means all extensions will be allowed</span>
+                                <span class="component-desc">Comma seperated list of associated file extensions SickRage should keep while post processing. Leaving it empty means all associated files will be deleted</span>
                             </label>
                         </div>
                         <div class="field-pair">
@@ -216,29 +218,6 @@
                             </label>
                         </div>
                         <div class="field-pair">
-                            <input id="use_failed_downloads" type="checkbox" class="enabler" name="use_failed_downloads" ${('', 'checked="checked"')[bool(sickbeard.USE_FAILED_DOWNLOADS)]}/>
-                            <label for="use_failed_downloads">
-                                <span class="component-title">Use Failed Downloads</span>
-                                <span class="component-desc">Use Failed Download Handling?</span>
-                            </label>
-                            <label class="nocheck" for="use_failed_downloads">
-                                <span class="component-title">&nbsp;</span>
-                            </label>
-                        </div>
-                        <div id="content_use_failed_downloads">
-                            <div class="field-pair">
-                                <input id="delete_failed" type="checkbox" name="delete_failed" ${('', 'checked="checked"')[bool(sickbeard.DELETE_FAILED)]}/>
-                                <label for="delete_failed">
-                                    <span class="component-title">Delete Failed</span>
-                                    <span class="component-desc">Delete files left over from a failed download?</span>
-                                </label>
-                                <label class="nocheck" for="delete_failed">
-                                    <span class="component-title">&nbsp;</span>
-                                    <span class="component-desc"><b>NOTE:</b> This only works if Use Failed Downloads is enabled.</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="field-pair">
                             <label class="nocheck">
                                 <span class="component-title">Extra Scripts</span>
                                 <input type="text" name="extra_scripts" value="${'|'.join(sickbeard.EXTRA_SCRIPTS)}" class="form-control input-sm input350" autocapitalize="off" />
@@ -251,7 +230,7 @@
                         <input type="submit" class="btn config_submitter" value="Save Changes" /><br>
                     </fieldset>
                 </div><!-- /component-group1 //-->
-                <div id="core-component-group2" class="component-group">
+                <div id="episode-naming" class="component-group">
 
                     <div class="component-group-desc">
                         <h3>Episode Naming</h3>
@@ -337,12 +316,12 @@
                                         </tr>
                                         <tr class="even">
                                           <td class="align-right"><b>XEM Season Number:</b></td>
-                                          <td>%XMS</td>
+                                          <td>%XS</td>
                                           <td>2</td>
                                         </tr>
                                         <tr>
                                           <td>&nbsp;</td>
-                                          <td>%0XMS</td>
+                                          <td>%0XS</td>
                                           <td>02</td>
                                         </tr>
                                         <tr class="even">
@@ -357,12 +336,12 @@
                                         </tr>
                                         <tr class="even">
                                           <td class="align-right"><b>XEM Episode Number:</b></td>
-                                          <td>%XME</td>
+                                          <td>%XE</td>
                                           <td>3</td>
                                         </tr>
                                         <tr>
                                           <td>&nbsp;</td>
-                                          <td>%0XME</td>
+                                          <td>%0XE</td>
                                           <td>03</td>
                                         </tr>
                                         <tr class="even">
@@ -446,7 +425,7 @@
                                           <td>Show.Name.S02E03.HDTV.XviD-RLSGROUP</td>
                                         </tr>
                                         <tr>
-                                          <td class="align-right"><i class="glyphicon glyphicon-info-sign" title="'SiCKRAGE' is used in place of RLSGROUP if it could not be properly detected"></i> <b>Release Group:</b></td>
+                                          <td class="align-right"><i class="glyphicon glyphicon-info-sign" title="'SickRage' is used in place of RLSGROUP if it could not be properly detected"></i> <b>Release Group:</b></td>
                                           <td>%RG</td>
                                           <td>RLSGROUP</td>
                                         </tr>
@@ -654,7 +633,7 @@
                                               <td>Show.Name.2010.03.09.HDTV.XviD-RLSGROUP</td>
                                             </tr>
                                             <tr class="even">
-                                              <td class="align-right"><i class="glyphicon glyphicon-info-sign" title="'SiCKRAGE' is used in place of RLSGROUP if it could not be properly detected"></i> <b>Release Group:</b></td>
+                                              <td class="align-right"><i class="glyphicon glyphicon-info-sign" title="'SickRage' is used in place of RLSGROUP if it could not be properly detected"></i> <b>Release Group:</b></td>
                                               <td>%RG</td>
                                               <td>RLSGROUP</td>
                                             </tr>
@@ -831,7 +810,7 @@
                                               <td>Show.Name.9th.Mar.2011.HDTV.XviD-RLSGROUP</td>
                                             </tr>
                                             <tr class="even">
-                                              <td class="align-right"><i class="glyphicon glyphicon-info-sign" title="'SiCKRAGE' is used in place of RLSGROUP if it could not be properly detected"></i> <b>Release Group:</b></td>
+                                              <td class="align-right"><i class="glyphicon glyphicon-info-sign" title="'SickRage' is used in place of RLSGROUP if it could not be properly detected"></i> <b>Release Group:</b></td>
                                               <td>%RG</td>
                                               <td>RLSGROUP</td>
                                             </tr>
@@ -940,12 +919,12 @@
                                             </tr>
                                             <tr class="even">
                                               <td class="align-right"><b>XEM Season Number:</b></td>
-                                              <td>%XMS</td>
+                                              <td>%XS</td>
                                               <td>2</td>
                                             </tr>
                                             <tr>
                                               <td>&nbsp;</td>
-                                              <td>%0XMS</td>
+                                              <td>%0XS</td>
                                               <td>02</td>
                                             </tr>
                                             <tr class="even">
@@ -960,12 +939,12 @@
                                             </tr>
                                             <tr class="even">
                                               <td class="align-right"><b>XEM Episode Number:</b></td>
-                                              <td>%XME</td>
+                                              <td>%XE</td>
                                               <td>3</td>
                                             </tr>
                                             <tr>
                                               <td>&nbsp;</td>
-                                              <td>%0XME</td>
+                                              <td>%0XE</td>
                                               <td>03</td>
                                             </tr>
                                             <tr class="even">
@@ -1004,7 +983,7 @@
                                               <td>Show.Name.S02E03.HDTV.XviD-RLSGROUP</td>
                                             </tr>
                                             <tr>
-                                              <td class="align-right"><i class="glyphicon glyphicon-info-sign" title="'SiCKRAGE' is used in place of RLSGROUP if it could not be properly detected"></i> <b>Release Group:</b></td>
+                                              <td class="align-right"><i class="glyphicon glyphicon-info-sign" title="'SickRage' is used in place of RLSGROUP if it could not be properly detected"></i> <b>Release Group:</b></td>
                                               <td>%RG</td>
                                               <td>RLSGROUP</td>
                                             </tr>
@@ -1090,7 +1069,7 @@
                     </fieldset>
                 </div><!-- /component-group2 //-->
 
-                <div id="core-component-group3" class="component-group">
+                <div id="metadata" class="component-group">
                     <div class="component-group-desc">
                         <h3>Metadata</h3>
                         <p>The data associated to the data. These are files associated to a TV show in the form of images and text that, when supported, will enhance the viewing experience.</p>

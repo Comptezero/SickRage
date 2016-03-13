@@ -12,11 +12,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import sickbeard
 from sickbeard import logger
@@ -26,7 +26,7 @@ from libtrakt import TraktAPI
 from libtrakt.exceptions import traktException, traktServerBusy, traktAuthException
 
 
-class TraktNotifier(object):
+class Notifier(object):
     """
     A "notifier" for trakt.tv which keeps track of what has and hasn't been added to your library.
     """
@@ -41,6 +41,9 @@ class TraktNotifier(object):
         pass
 
     def notify_git_update(self, new_version):
+        pass
+
+    def notify_login(self, ipaddress=""):
         pass
 
     def update_library(self, ep_obj):
@@ -236,5 +239,3 @@ class TraktNotifier(object):
         except (traktException, traktAuthException, traktServerBusy) as e:
             logger.log(u"Could not connect to Trakt service: %s" % ex(e), logger.WARNING)
             return "Test notice failed to Trakt: %s" % ex(e)
-
-notifier = TraktNotifier

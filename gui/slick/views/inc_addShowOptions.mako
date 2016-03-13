@@ -4,6 +4,17 @@
     from sickbeard.common import Quality, qualityPresets, qualityPresetStrings, statusStrings
     from sickbeard import subtitles
 %>
+
+        <div class="field-pair alt">
+            <label for="customQuality" class="clearfix">
+                <span class="component-title">Preferred Quality</span>
+                <span class="component-desc">
+                    <% anyQualities, bestQualities = Quality.splitQuality(sickbeard.QUALITY_DEFAULT) %>
+                    <%include file="/inc_qualityChooser.mako"/>
+                </span>
+            </label>
+        </div>
+
         % if sickbeard.USE_SUBTITLES:
         <br><div class="field-pair">
             <label for="subtitles" class="clearfix">
@@ -71,21 +82,6 @@
                 </span>
             </label>
         </div>
-
-        <div class="field-pair alt">
-            <label for="archive" class="clearfix">
-                <span class="component-title">Archive first match</span>
-                <span class="component-desc">
-                    <input type="checkbox" name="archive" id="archive" ${('', 'checked="checked"')[bool(sickbeard.ARCHIVE_DEFAULT)]} />
-                    <p>Archive episodes after downloading first match?</p>
-                </span>
-            </label>
-        </div>
-
-        <% qualities = Quality.splitQuality(sickbeard.QUALITY_DEFAULT) %>
-        <% anyQualities = qualities[0] %>
-        <% bestQualities = qualities[1] %>
-        <%include file="/inc_qualityChooser.mako"/>
 
         <br>
         <div class="field-pair alt">

@@ -5,16 +5,19 @@ import re
 from zipfile import ZipFile
 
 from babelfish import Language, language_converters
+from guessit import guessit
 from requests import Session
 
-from . import ParserBeautifulSoup, Provider, get_version
-from .. import __version__
+from . import ParserBeautifulSoup, Provider
+from .. import __short_version__
 from ..cache import EPISODE_EXPIRATION_TIME, SHOW_EXPIRATION_TIME, region
 from ..exceptions import ProviderError
-from ..subtitle import Subtitle, fix_line_ending, guess_matches, guess_properties, sanitized_string_equal
+from ..subtitle import Subtitle, fix_line_ending, guess_matches
+from ..utils import sanitize
 from ..video import Episode
 
 logger = logging.getLogger(__name__)
+
 language_converters.register('tvsubtitles = subliminal.converters.tvsubtitles:TVsubtitlesConverter')
 
 link_re = re.compile('^(?P<series>.+?)(?: \(?\d{4}\)?| \((?:US|UK)\))? \((?P<first_year>\d{4})-\d{4}\)$')
@@ -38,11 +41,11 @@ class TVsubtitlesSubtitle(Subtitle):
     def id(self):
         return str(self.subtitle_id)
 
-    def get_matches(self, video, hearing_impaired=False):
-        matches = super(TVsubtitlesSubtitle, self).get_matches(video, hearing_impaired=hearing_impaired)
+    def get_matches(self, video):
+        matches = set()
 
         # series
-        if video.series and sanitized_string_equal(self.series, video.series):
+        if video.series and sanitize(self.series) == sanitize(video.series):
             matches.add('series')
         # season
         if video.season and self.season == video.season:
@@ -51,16 +54,16 @@ class TVsubtitlesSubtitle(Subtitle):
         if video.episode and self.episode == video.episode:
             matches.add('episode')
         # year
-        if self.year == video.year:
+        if video.original_series and self.year is None or video.year and video.year == self.year:
             matches.add('year')
         # release_group
         if video.release_group and self.release and video.release_group.lower() in self.release.lower():
             matches.add('release_group')
         # other properties
         if self.release:
-            matches |= guess_matches(video, guess_properties(self.release), partial=True)
+            matches |= guess_matches(video, guessit(self.release, {'type': 'episode'}), partial=True)
         if self.rip:
-            matches |= guess_matches(video, guess_properties(self.rip), partial=True)
+            matches |= guess_matches(video, guessit(self.rip), partial=True)
 
         return matches
 
@@ -75,7 +78,7 @@ class TVsubtitlesProvider(Provider):
 
     def initialize(self):
         self.session = Session()
-        self.session.headers = {'User-Agent': 'Subliminal/%s' % get_version(__version__)}
+        self.session.headers['User-Agent'] = 'Subliminal/%s' % __short_version__
 
     def terminate(self):
         self.session.close()
@@ -84,7 +87,7 @@ class TVsubtitlesProvider(Provider):
     def search_show_id(self, series, year=None):
         """Search the show id from the `series` and `year`.
 
-        :param string series: series of the episode.
+        :param str series: series of the episode.
         :param year: year of the series, if any.
         :type year: int or None
         :return: the show id, if any.

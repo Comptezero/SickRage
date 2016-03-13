@@ -11,11 +11,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 """
 Tests for SickRage
@@ -25,6 +25,7 @@ from __future__ import print_function
 
 import helper
 import media
+import providers
 import show
 import system
 import unittest
@@ -35,6 +36,7 @@ if __name__ == '__main__':
     TEST_MODULES = [
         helper,
         media,
+        providers,
         show,
         system,
     ]

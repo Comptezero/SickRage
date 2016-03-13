@@ -12,11 +12,12 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty    of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
+# pylint:disable=too-many-lines
 
 import os
 import io
@@ -51,23 +52,23 @@ from socket import timeout as SocketTimeout
 from sickbeard import logger, classes
 from sickbeard.common import USER_AGENT
 from sickbeard import db
-from sickbeard.notifiers.synoindex import notifier as synoindex_notifier
-from sickrage.helper.common import http_code_description, media_extensions, pretty_file_size, subtitle_extensions
+from sickrage.helper.common import http_code_description, media_extensions, pretty_file_size, subtitle_extensions, episode_num
 from sickrage.helper.encoding import ek
 from sickrage.helper.exceptions import ex
 from sickrage.show.Show import Show
-from cachecontrol import CacheControl, caches
+from cachecontrol import CacheControl
+# from httpcache import CachingHTTPAdapter
+
 from itertools import izip, cycle
 
 import shutil
 import shutil_custom
 
 import xml.etree.ElementTree as ET
-import json
 
 shutil.copyfile = shutil_custom.copyfile_custom
 
-# pylint: disable=W0212
+# pylint: disable=protected-access
 # Access to a protected member of a client class
 urllib._urlopener = classes.SickBeardURLopener()
 
@@ -108,41 +109,47 @@ def remove_non_release_groups(name):
     # select release_name from tv_episodes WHERE LENGTH(release_name);
     # [eSc], [SSG], [GWC] are valid release groups for non-anime
     removeWordsList = {
-        r'\[rartv\]$':       'searchre',
-        r'\[rarbg\]$':       'searchre',
-        r'\[eztv\]$':        'searchre',
-        r'\[ettv\]$':        'searchre',
-        r'\[cttv\]$':        'searchre',
-        r'\[vtv\]$':         'searchre',
-        r'\[EtHD\]$':        'searchre',
-        r'\[GloDLS\]$':      'searchre',
-        r'\[silv4\]$':       'searchre',
-        r'\[Seedbox\]$':     'searchre',
-        r'\[PublicHD\]$':    'searchre',
+        r'\[rartv\]$': 'searchre',
+        r'\[rarbg\]$': 'searchre',
+        r'\[eztv\]$': 'searchre',
+        r'\[ettv\]$': 'searchre',
+        r'\[cttv\]$': 'searchre',
+        r'\[vtv\]$': 'searchre',
+        r'\[EtHD\]$': 'searchre',
+        r'\[GloDLS\]$': 'searchre',
+        r'\[silv4\]$': 'searchre',
+        r'\[Seedbox\]$': 'searchre',
+        r'\[PublicHD\]$': 'searchre',
         r'\[AndroidTwoU\]$': 'searchre',
-        r'\.\[BT\]$':        'searchre',
-        r' \[1044\]$':       'searchre',
-        r'\.RiPSaLoT$':      'searchre',
-        r'\.GiuseppeTnT$':   'searchre',
-        r'\.Renc$':          'searchre',
-        r'-NZBGEEK$':        'searchre',
-        r'-Siklopentan$':    'searchre',
-        r'-\[SpastikusTV\]$':                 'searchre',
-        r'-RP$':                             'searchre',
-        r'-20-40$':                          'searchre',
-        r'\.\[www\.usabit\.com\]$':          'searchre',
-        r'^\[www\.Cpasbien\.pe\] ':          'searchre',
-        r'^\[www\.Cpasbien\.com\] ':         'searchre',
-        r'^\[ www\.Cpasbien\.pw \] ':        'searchre',
-        r'^\.www\.Cpasbien\.pw':            'searchre',
-        r'^\[www\.newpct1\.com\]':            'searchre',
-        r'^\[ www\.Cpasbien\.com \] ':       'searchre',
-        r'- \{ www\.SceneTime\.com \}$':     'searchre',
-        r'^\{ www\.SceneTime\.com \} - ':    'searchre',
-        r'^\]\.\[www\.tensiontorrent.com\] - ':      'searchre',
-        r'^\]\.\[ www\.tensiontorrent.com \] - ':    'searchre',
-        r'- \[ www\.torrentday\.com \]$':            'searchre',
-        r'^\[ www\.TorrentDay\.com \] - ':           'searchre',
+        r'\[brassetv]\]$': 'searchre',
+        r'\(musicbolt\.com\)$': 'searchre',
+        r'\.\[BT\]$': 'searchre',
+        r' \[1044\]$': 'searchre',
+        r'\.RiPSaLoT$': 'searchre',
+        r'\.GiuseppeTnT$': 'searchre',
+        r'\.Renc$': 'searchre',
+        r'\.gz$': 'searchre',
+        r'(?<![57])\.1$': 'searchre',
+        r'-NZBGEEK$': 'searchre',
+        r'-Siklopentan$': 'searchre',
+        r'-Chamele0n$': 'searchre',
+        r'-Obfuscated$': 'searchre',
+        r'-\[SpastikusTV\]$': 'searchre',
+        r'-RP$': 'searchre',
+        r'-20-40$': 'searchre',
+        r'\.\[www\.usabit\.com\]$': 'searchre',
+        r'^\[www\.Cpasbien\.pe\] ': 'searchre',
+        r'^\[www\.Cpasbien\.com\] ': 'searchre',
+        r'^\[ www\.Cpasbien\.pw \] ': 'searchre',
+        r'^\.www\.Cpasbien\.pw': 'searchre',
+        r'^\[www\.newpct1\.com\]': 'searchre',
+        r'^\[ www\.Cpasbien\.com \] ': 'searchre',
+        r'- \{ www\.SceneTime\.com \}$': 'searchre',
+        r'^\{ www\.SceneTime\.com \} - ': 'searchre',
+        r'^\]\.\[www\.tensiontorrent.com\] - ': 'searchre',
+        r'^\]\.\[ www\.tensiontorrent.com \] - ': 'searchre',
+        r'- \[ www\.torrentday\.com \]$': 'searchre',
+        r'^\[ www\.TorrentDay\.com \] - ': 'searchre',
         r'\[NO-RAR\] - \[ www\.torrentday\.com \]$': 'searchre',
     }
 
@@ -165,25 +172,26 @@ def isMediaFile(filename):
     """
 
     # ignore samples
-    if re.search(r'(^|[\W_])(?<!shomin.)(sample\d*)[\W_]', filename, re.I):
-        return False
+    try:
+        if re.search(r'(^|[\W_])(?<!shomin.)(sample\d*)[\W_]', filename, re.I):
+            return False
 
-    # ignore RARBG release intro
-    if re.search(r'^RARBG\.\w+\.(mp4|avi|txt)$', filename, re.I):
-        return False
+        # ignore RARBG release intro
+        if re.search(r'^RARBG\.\w+\.(mp4|avi|txt)$', filename, re.I):
+            return False
 
-    # ignore MAC OS's retarded "resource fork" files
-    if filename.startswith('._'):
-        return False
+        # ignore MAC OS's retarded "resource fork" files
+        if filename.startswith('._'):
+            return False
 
-    sepFile = filename.rpartition(".")
+        sepFile = filename.rpartition(".")
 
-    if re.search('extras?$', sepFile[0], re.I):
-        return False
+        if re.search('extras?$', sepFile[0], re.I):
+            return False
 
-    if sepFile[2].lower() in media_extensions:
-        return True
-    else:
+        return sepFile[2].lower() in media_extensions
+    except TypeError as error:  # Not a string
+        logger.log('Invalid filename. Filename must be a string. %s' % error, logger.DEBUG)  # pylint: disable=no-member
         return False
 
 
@@ -244,55 +252,10 @@ def makeDir(path):
         try:
             ek(os.makedirs, path)
             # do the library update for synoindex
-            synoindex_notifier().addFolder(path)
+            sickbeard.notifiers.synoindex_notifier.addFolder(path)
         except OSError:
             return False
     return True
-
-
-def searchDBForShow(regShowName, log=False):
-    """
-    Searches if show names are present in the DB
-
-    :param regShowName: list of show names to look for
-    :param log: Boolean, log debug results of search (defaults to False)
-    :return: Indexer ID of found show
-    """
-
-    showNames = [re.sub('[. -]', ' ', regShowName)]
-
-    yearRegex = r"([^()]+?)\s*(\()?(\d{4})(?(2)\))$"
-
-    myDB = db.DBConnection()
-    for showName in showNames:
-
-        sqlResults = myDB.select("SELECT * FROM tv_shows WHERE show_name LIKE ?",
-                                 [showName])
-
-        if len(sqlResults) == 1:
-            return int(sqlResults[0]["indexer_id"])
-        else:
-            # if we didn't get exactly one result then try again with the year stripped off if possible
-            match = re.match(yearRegex, showName)
-            if match and match.group(1):
-                if log:
-                    logger.log(u"Unable to match original name but trying to manually strip and specify show year",
-                               logger.DEBUG)
-                sqlResults = myDB.select(
-                    "SELECT * FROM tv_shows WHERE (show_name LIKE ?) AND startyear = ?",
-                    [match.group(1) + '%', match.group(3)])
-
-            if len(sqlResults) == 0:
-                if log:
-                    logger.log(u"Unable to match a record in the DB for " + showName, logger.DEBUG)
-                continue
-            elif len(sqlResults) > 1:
-                if log:
-                    logger.log(u"Multiple results for " + showName + " in the DB, unable to match show name",
-                               logger.DEBUG)
-                continue
-            else:
-                return int(sqlResults[0]["indexer_id"])
 
 
 def searchIndexerForShowID(regShowName, indexer=None, indexer_id=None, ui=None):
@@ -382,11 +345,23 @@ def copyFile(srcFile, destFile):
     :param destFile: Path of destination file
     """
 
-    ek(shutil.copyfile, srcFile, destFile)
     try:
-        ek(shutil.copymode, srcFile, destFile)
-    except OSError:
-        pass
+        from shutil import SpecialFileError, Error
+    except ImportError:
+        from shutil import Error
+        SpecialFileError = Error
+
+    try:
+        ek(shutil.copyfile, srcFile, destFile)
+    except (SpecialFileError, Error) as error:
+        logger.log(u'{}'.format(error), logger.WARNING)
+    except Exception as error:
+        logger.log(u'{}'.format(error), logger.ERROR)
+    else:
+        try:
+            ek(shutil.copymode, srcFile, destFile)
+        except OSError:
+            pass
 
 
 def moveFile(srcFile, destFile):
@@ -509,7 +484,7 @@ def make_dirs(path):
                     # use normpath to remove end separator, otherwise checks permissions against itself
                     chmodAsParent(ek(os.path.normpath, sofar))
                     # do the library update for synoindex
-                    synoindex_notifier().addFolder(sofar)
+                    sickbeard.notifiers.synoindex_notifier.addFolder(sofar)
                 except (OSError, IOError) as e:
                     logger.log(u"Failed creating %s : %r" % (sofar, ex(e)), logger.ERROR)
                     return False
@@ -589,7 +564,7 @@ def delete_empty_folders(check_empty_dir, keep_dir=None):
                 # need shutil.rmtree when ignore_items is really implemented
                 ek(os.rmdir, check_empty_dir)
                 # do the library update for synoindex
-                synoindex_notifier().deleteFolder(check_empty_dir)
+                sickbeard.notifiers.synoindex_notifier.deleteFolder(check_empty_dir)
             except OSError as e:
                 logger.log(u"Unable to delete %s. Error: %r" % (check_empty_dir, repr(e)), logger.WARNING)
                 break
@@ -646,7 +621,7 @@ def chmodAsParent(childPath):
     if childPath_mode == childMode:
         return
 
-    childPath_owner = childPathStat.st_uid
+    childPath_owner = childPathStat.st_uid  # pylint: disable=no-member
     user_id = os.geteuid()  # @UndefinedVariable - only available on UNIX
 
     if user_id != 0 and user_id != childPath_owner:
@@ -686,7 +661,7 @@ def fixSetGroupID(childPath):
         if childGID == parentGID:
             return
 
-        childPath_owner = childStat.st_uid
+        childPath_owner = childStat.st_uid  # pylint: disable=no-member
         user_id = os.geteuid()  # @UndefinedVariable - only available on UNIX
 
         if user_id != 0 and user_id != childPath_owner:
@@ -735,15 +710,18 @@ def get_absolute_number_from_season_and_episode(show, season, episode):
     absolute_number = None
 
     if season and episode:
-        myDB = db.DBConnection()
+        main_db_con = db.DBConnection()
         sql = "SELECT * FROM tv_episodes WHERE showid = ? and season = ? and episode = ?"
-        sqlResults = myDB.select(sql, [show.indexerid, season, episode])
+        sql_results = main_db_con.select(sql, [show.indexerid, season, episode])
 
-        if len(sqlResults) == 1:
-            absolute_number = int(sqlResults[0]["absolute_number"])
-            logger.log(u"Found absolute number %s for show %s S%02dE%02d" % (absolute_number, show.name, season, episode), logger.DEBUG)
+        if len(sql_results) == 1:
+            absolute_number = int(sql_results[0]["absolute_number"])
+            logger.log(u"Found absolute number {absolute} for show {show} {ep}".format
+                       (absolute=absolute_number, show=show.name,
+                        ep=episode_num(season, episode)), logger.DEBUG)
         else:
-            logger.log(u"No entries for absolute number for show %s S%02dE%02d" % (show.name, season, episode), logger.DEBUG)
+            logger.log(u"No entries for absolute number for show {show} {ep}".format
+                       (show=show.name, ep=episode_num(season, episode)), logger.DEBUG)
 
     return absolute_number
 
@@ -859,7 +837,7 @@ def create_https_certificates(ssl_cert, ssl_key):
 
     # Save the key and certificate to disk
     try:
-        # pylint: disable=E1101
+        # pylint: disable=no-member
         # Module has no member
         io.open(ssl_key, 'wb').write(crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey))
         io.open(ssl_cert, 'wb').write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
@@ -1097,8 +1075,8 @@ def get_show(name, tryIndexers=False):
 
         # try indexers
         if not showObj and tryIndexers:
-            showObj = Show.find(sickbeard.showList,
-                                      searchIndexerForShowID(full_sanitizeSceneName(name), ui=classes.ShowListUI)[2])
+            showObj = Show.find(
+                sickbeard.showList, searchIndexerForShowID(full_sanitizeSceneName(name), ui=classes.ShowListUI)[2])
 
         # try scene exceptions
         if not showObj:
@@ -1311,19 +1289,19 @@ def mapIndexersToShow(showObj):
     for indexer in sickbeard.indexerApi().indexers:
         mapped[indexer] = showObj.indexerid if int(indexer) == int(showObj.indexer) else 0
 
-    myDB = db.DBConnection()
-    sqlResults = myDB.select(
+    main_db_con = db.DBConnection()
+    sql_results = main_db_con.select(
         "SELECT * FROM indexer_mapping WHERE indexer_id = ? AND indexer = ?",
         [showObj.indexerid, showObj.indexer])
 
     # for each mapped entry
-    for curResult in sqlResults:
+    for curResult in sql_results:
         nlist = [i for i in curResult if i is not None]
         # Check if its mapped with both tvdb and tvrage.
         if len(nlist) >= 4:
             logger.log(u"Found indexer mapping in cache for show: " + showObj.name, logger.DEBUG)
             mapped[int(curResult['mindexer'])] = int(curResult['mindexer_id'])
-            return mapped
+            break
     else:
         sql_l = []
         for indexer in sickbeard.indexerApi().indexers:
@@ -1355,8 +1333,8 @@ def mapIndexersToShow(showObj):
                     [showObj.indexerid, showObj.indexer, int(mapped_show[0]['id']), indexer]])
 
         if len(sql_l) > 0:
-            myDB = db.DBConnection()
-            myDB.mass_action(sql_l)
+            main_db_con = db.DBConnection()
+            main_db_con.mass_action(sql_l)
 
     return mapped
 
@@ -1370,18 +1348,9 @@ def touchFile(fname, atime=None):
     :return: True on success, False on failure
     """
 
-    if atime is not None:
-        try:
-            with file(fname, 'a'):
-                os.utime(fname, (atime, atime))
-                return True
-        except Exception as e:
-            if e.errno == errno.ENOSYS:
-                logger.log(u"File air date stamping not available on your OS. Please disable setting", logger.DEBUG)
-            elif e.errno == errno.EACCES:
-                logger.log(u"File air date stamping failed(Permission denied). Check permissions for file: %s" % fname, logger.ERROR)
-            else:
-                logger.log(u"File air date stamping failed. The error is: %r" % ex(e), logger.ERROR)
+    if atime and fname and ek(os.path.isfile, fname):
+        ek(os.utime, fname, (atime, atime))
+        return True
 
     return False
 
@@ -1406,76 +1375,60 @@ def _getTempDir():
     return ek(os.path.join, tempfile.gettempdir(), "sickrage-%s" % uid)
 
 
-def _setUpSession(session, headers):
-    """
-    Returns a session initialized with default cache and parameter settings
+def make_session():
+    session = requests.Session()
 
-    :param session: session object to (re)use
-    :param headers: Headers to pass to session
-    :return: session object
-    """
-
-    # request session
-    cache_dir = sickbeard.CACHE_DIR or _getTempDir()
-    session = CacheControl(sess=session, cache=caches.FileCache(ek(os.path.join, cache_dir, 'sessions'), use_dir_lock=True), cache_etags=False)
-
-    # request session clear residual referer
-    # pylint: disable=C0325
-    # These extra parens are necessary!
-    if 'Referer' in session.headers and 'Referer' not in (headers or {}):
-        session.headers.pop('Referer')
-
-    # request session headers
     session.headers.update({'User-Agent': USER_AGENT, 'Accept-Encoding': 'gzip,deflate'})
-    if headers:
-        session.headers.update(headers)
 
-    # request session ssl verify
-    session.verify = certifi.where() if sickbeard.SSL_VERIFY else False
+    return CacheControl(sess=session, cache_etags=True)
+
+
+def request_defaults(kwargs):
+    hooks = kwargs.pop(u'hooks', None)
+    cookies = kwargs.pop(u'cookies', None)
+    verify = certifi.old_where() if all([sickbeard.SSL_VERIFY, kwargs.pop(u'verify', True)]) else False
 
     # request session proxies
-    if 'Referer' not in session.headers and sickbeard.PROXY_SETTING:
+    if sickbeard.PROXY_SETTING:
         logger.log(u"Using global proxy: " + sickbeard.PROXY_SETTING, logger.DEBUG)
         scheme, address = urllib2.splittype(sickbeard.PROXY_SETTING)
         address = sickbeard.PROXY_SETTING if scheme else 'http://' + sickbeard.PROXY_SETTING
-        session.proxies = {
+        proxies = {
             "http": address,
             "https": address,
         }
-        session.headers.update({'Referer': address})
+    else:
+        proxies = None
 
-    if 'Content-Type' in session.headers:
-        session.headers.pop('Content-Type')
-
-    return session
+    return hooks, cookies, verify, proxies
 
 
-def getURL(url, post_data=None, params=None, headers=None, timeout=30, session=None, json=False, needBytes=False):
+def getURL(url, post_data=None, params=None, headers=None,  # pylint:disable=too-many-arguments, too-many-return-statements, too-many-branches, too-many-locals
+           timeout=30, session=None, **kwargs):
     """
-    Returns a byte-string retrieved from the url provider.
+    Returns data retrieved from the url provider.
     """
-
-    session = _setUpSession(session, headers)
-
-    if params and isinstance(params, (list, dict)):
-        for param in params:
-            if isinstance(params[param], unicode):
-                params[param] = params[param].encode('utf-8')
-
-    session.params = params
-
     try:
-        # decide if we get or post data to server
-        if post_data:
-            if isinstance(post_data, (list, dict)):
-                for param in post_data:
-                    if isinstance(post_data[param], unicode):
-                        post_data[param] = post_data[param].encode('utf-8')
+        response_type = kwargs.pop(u'returns', 'text')
+        stream = kwargs.pop(u'stream', False)
 
-            session.headers.update({'Content-Type': 'application/x-www-form-urlencoded'})
-            resp = session.post(url, data=post_data, timeout=timeout, allow_redirects=True, verify=session.verify)
-        else:
-            resp = session.get(url, timeout=timeout, allow_redirects=True, verify=session.verify)
+        hooks, cookies, verify, proxies = request_defaults(kwargs)
+
+        if params and isinstance(params, (list, dict)):
+            for param in params:
+                if isinstance(params[param], unicode):
+                    params[param] = params[param].encode('utf-8')
+
+        if post_data and isinstance(post_data, (list, dict)):
+            for param in post_data:
+                if isinstance(post_data[param], unicode):
+                    post_data[param] = post_data[param].encode('utf-8')
+
+        resp = session.request(
+            'POST' if post_data else 'GET', url, data=post_data, params=params,
+            timeout=timeout, allow_redirects=True, hooks=hooks, stream=stream,
+            headers=headers, cookies=cookies, proxies=proxies, verify=verify
+        )
 
         if not resp.ok:
             logger.log(u"Requested getURL %s returned status code is %s: %s"
@@ -1483,30 +1436,33 @@ def getURL(url, post_data=None, params=None, headers=None, timeout=30, session=N
             return None
 
     except (SocketTimeout, TypeError) as e:
-        logger.log(u"Connection timed out (sockets) accessing getURL %s Error: %r" % (url, ex(e)), logger.WARNING)
+        logger.log(u"Connection timed out (sockets) accessing getURL %s Error: %r" % (url, ex(e)), logger.DEBUG)
         return None
-    except requests.exceptions.HTTPError as e:
-        logger.log(u"HTTP error in getURL %s Error: %r" % (url, ex(e)), logger.WARNING)
+    except (requests.exceptions.HTTPError, requests.exceptions.TooManyRedirects) as e:
+        logger.log(u"HTTP error in getURL %s Error: %r" % (url, ex(e)), logger.DEBUG)
         return None
     except requests.exceptions.ConnectionError as e:
-        logger.log(u"Connection error to getURL %s Error: %r" % (url, ex(e)), logger.WARNING)
+        logger.log(u"Connection error to getURL %s Error: %r" % (url, ex(e)), logger.DEBUG)
         return None
     except requests.exceptions.Timeout as e:
-        logger.log(u"Connection timed out accessing getURL %s Error: %r" % (url, ex(e)), logger.WARNING)
+        logger.log(u"Connection timed out accessing getURL %s Error: %r" % (url, ex(e)), logger.DEBUG)
         return None
     except requests.exceptions.ContentDecodingError:
         logger.log(u"Content-Encoding was gzip, but content was not compressed. getURL: %s" % url, logger.DEBUG)
         logger.log(traceback.format_exc(), logger.DEBUG)
         return None
     except Exception as e:
-        logger.log(u"Unknown exception in getURL %s Error: %r" % (url, ex(e)), logger.WARNING)
-        logger.log(traceback.format_exc(), logger.WARNING)
+        if hasattr(e, 'errno') and e.errno == errno.ECONNRESET:
+            logger.log(u"Connection reseted by peer accessing getURL %s Error: %r" % (url, ex(e)), logger.DEBUG)
+        else:
+            logger.log(u"Unknown exception in getURL %s Error: %r" % (url, ex(e)), logger.ERROR)
+            logger.log(traceback.format_exc(), logger.DEBUG)
         return None
 
-    return (resp.text, resp.content)[needBytes] if not json else resp.json()
+    return resp if response_type == u'response' or response_type is None else resp.json() if response_type == u'json' else getattr(resp, response_type, resp)
 
 
-def download_file(url, filename, session=None, headers=None):
+def download_file(url, filename, session=None, headers=None, **kwargs):  # pylint:disable=too-many-return-statements
     """
     Downloads a file specified
 
@@ -1517,11 +1473,13 @@ def download_file(url, filename, session=None, headers=None):
     :return: True on success, False on failure
     """
 
-    session = _setUpSession(session, headers)
-    session.stream = True
-
     try:
-        with closing(session.get(url, allow_redirects=True, verify=session.verify)) as resp:
+        hooks, cookies, verify, proxies = request_defaults(kwargs)
+
+        with closing(session.get(url, allow_redirects=True, stream=True,
+                                 verify=verify, headers=headers, cookies=cookies,
+                                 hooks=hooks, proxies=proxies)) as resp:
+
             if not resp.ok:
                 logger.log(u"Requested download url %s returned status code is %s: %s"
                            % (url, resp.status_code, http_code_description(resp.status_code)), logger.DEBUG)
@@ -1541,8 +1499,8 @@ def download_file(url, filename, session=None, headers=None):
     except (SocketTimeout, TypeError) as e:
         remove_file_failed(filename)
         logger.log(u"Connection timed out (sockets) while loading download URL %s Error: %r" % (url, ex(e)), logger.WARNING)
-        return None
-    except requests.exceptions.HTTPError as e:
+        return False
+    except (requests.exceptions.HTTPError, requests.exceptions.TooManyRedirects) as e:
         remove_file_failed(filename)
         logger.log(u"HTTP error %r while loading download URL %s " % (ex(e), url), logger.WARNING)
         return False
@@ -1560,7 +1518,8 @@ def download_file(url, filename, session=None, headers=None):
         return False
     except Exception:
         remove_file_failed(filename)
-        logger.log(u"Unknown exception while loading download URL %s : %r" % (url, traceback.format_exc()), logger.WARNING)
+        logger.log(u"Unknown exception while loading download URL %s : %r" % (url, traceback.format_exc()), logger.ERROR)
+        logger.log(traceback.format_exc(), logger.DEBUG)
         return False
 
     return True
@@ -1642,7 +1601,7 @@ def verify_freespace(src, dest, oldfile=None):
     if hasattr(os, 'statvfs'):  # POSIX
         def disk_usage(path):
             st = ek(os.statvfs, path)
-            free = st.f_bavail * st.f_frsize
+            free = st.f_bavail * st.f_frsize  # pylint: disable=no-member
             return free
 
     elif os.name == 'nt':       # Windows
@@ -1727,8 +1686,8 @@ def isFileLocked(checkfile, writeLockCheck=False):
     if not ek(os.path.exists, checkfile):
         return True
     try:
-        f = io.open(checkfile, 'rb')
-        f.close()
+        f = ek(io.open, checkfile, 'rb')
+        f.close()  # pylint: disable=no-member
     except IOError:
         return True
 
@@ -1758,18 +1717,22 @@ def getDiskSpaceUsage(diskPath=None):
             return pretty_file_size(free_bytes.value)
         else:
             st = ek(os.statvfs, diskPath)
-            return pretty_file_size(st.f_bavail * st.f_frsize)
+            return pretty_file_size(st.f_bavail * st.f_frsize)  # pylint: disable=no-member
     else:
         return False
 
 
-def getTVDBFromID(indexer_id, indexer):
+def getTVDBFromID(indexer_id, indexer):  # pylint:disable=too-many-return-statements
+
+    session = make_session()
     tvdb_id = ''
     if indexer == 'IMDB':
-        url = "http://www.thetvdb.com/api/GetSeriesByRemoteID.php?imdbid=%s" % (indexer_id)
-        data = urllib.urlopen(url)
+        url = "http://www.thetvdb.com/api/GetSeriesByRemoteID.php?imdbid=%s" % indexer_id
+        data = getURL(url, session=session, returns='content')
+        if data is None:
+            return tvdb_id
         try:
-            tree = ET.parse(data)
+            tree = ET.fromstring(data)
             for show in tree.getiterator("Series"):
                 tvdb_id = show.findtext("seriesid")
 
@@ -1778,10 +1741,12 @@ def getTVDBFromID(indexer_id, indexer):
 
         return tvdb_id
     elif indexer == 'ZAP2IT':
-        url = "http://www.thetvdb.com/api/GetSeriesByRemoteID.php?zap2it=%s" % (indexer_id)
-        data = urllib.urlopen(url)
+        url = "http://www.thetvdb.com/api/GetSeriesByRemoteID.php?zap2it=%s" % indexer_id
+        data = getURL(url, session=session, returns='content')
+        if data is None:
+            return tvdb_id
         try:
-            tree = ET.parse(data)
+            tree = ET.fromstring(data)
             for show in tree.getiterator("Series"):
                 tvdb_id = show.findtext("seriesid")
 
@@ -1790,10 +1755,35 @@ def getTVDBFromID(indexer_id, indexer):
 
         return tvdb_id
     elif indexer == 'TVMAZE':
-        url = "http://api.tvmaze.com/shows/%s" % (indexer_id)
-        response = urllib2.urlopen(url)
-        data = json.load(response)
+        url = "http://api.tvmaze.com/shows/%s" % indexer_id
+        data = getURL(url, session=session, returns='json')
+        if data is None:
+            return tvdb_id
         tvdb_id = data['externals']['thetvdb']
         return tvdb_id
     else:
         return tvdb_id
+
+
+def get_showname_from_indexer(indexer, indexer_id, lang='en'):
+    lINDEXER_API_PARMS = sickbeard.indexerApi(indexer).api_params.copy()
+    if lang:
+        lINDEXER_API_PARMS['language'] = lang
+
+    logger.log(u"" + str(sickbeard.indexerApi(indexer).name) + ": " + repr(lINDEXER_API_PARMS))
+
+    t = sickbeard.indexerApi(indexer).indexer(**lINDEXER_API_PARMS)
+    s = t[int(indexer_id)]
+
+    if hasattr(s, 'data'):
+        return s.data.get('seriesname')
+
+    return None
+
+
+def is_ip_private(ip):
+    priv_lo = re.compile(r"^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
+    priv_24 = re.compile(r"^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
+    priv_20 = re.compile(r"^192\.168\.\d{1,3}.\d{1,3}$")
+    priv_16 = re.compile(r"^172.(1[6-9]|2[0-9]|3[0-1]).[0-9]{1,3}.[0-9]{1,3}$")
+    return priv_lo.match(ip) or priv_24.match(ip) or priv_20.match(ip) or priv_16.match(ip)

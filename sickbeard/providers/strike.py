@@ -1,6 +1,7 @@
 # coding=utf-8
-# Author: Gonçalo (aka duramato) <matigonkas@outlook.com>
-# URL: https://github.com/SickRage/SickRage
+# Author: Gonçalo M. (aka duramato/supergonkas) <supergonkas@gmail.com>
+#
+# URL: https://sickrage.github.io
 #
 # This file is part of SickRage.
 #
@@ -11,42 +12,42 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
-from sickbeard import logger
-from sickbeard import tvcache
-from sickbeard.providers import generic
+from sickbeard import logger, tvcache
 
-class STRIKEProvider(generic.TorrentProvider):
+from sickrage.helper.common import convert_size, try_int
+from sickrage.providers.torrent.TorrentProvider import TorrentProvider
+
+
+class StrikeProvider(TorrentProvider):
 
     def __init__(self):
-        generic.TorrentProvider.__init__(self, "Strike")
+
+        TorrentProvider.__init__(self, "Strike")
 
         self.public = True
         self.url = 'https://getstrike.net/'
-        self.ratio = 0
-        self.cache = StrikeCache(self)
+        params = {'RSS': ['x264']}  # Use this hack for RSS search since most results will use this codec
+        self.cache = tvcache.TVCache(self, min_time=10, search_params=params)
         self.minseed, self.minleech = 2 * [None]
 
-    def _doSearch(self, search_strings, search_mode='eponly', epcount=0, age=0, epObj=None):
-
+    def search(self, search_strings, age=0, ep_obj=None):  # pylint: disable=too-many-locals
         results = []
-        items = {'Season': [], 'Episode': [], 'RSS': []}
-
-        for mode in search_strings.keys():  # Mode = RSS, Season, Episode
-            logger.log(u"Search Mode: %s" % mode, logger.DEBUG)
+        for mode in search_strings:  # Mode = RSS, Season, Episode
+            items = []
+            logger.log(u"Search Mode: {}".format(mode), logger.DEBUG)
             for search_string in search_strings[mode]:
 
                 if mode != 'RSS':
                     logger.log(u"Search string: " + search_string.strip(), logger.DEBUG)
 
-                searchURL = self.url + "api/v2/torrents/search/?category=TV&phrase=" + search_string
-                logger.log(u"Search URL: %s" %  searchURL, logger.DEBUG)
-                jdata = self.getURL(searchURL, json=True)
+                search_url = self.url + "api/v2/torrents/search/?category=TV&phrase=" + search_string
+                jdata = self.get_url(search_url, returns='json')
                 if not jdata:
                     logger.log(u"No data returned from provider", logger.DEBUG)
                     return []
@@ -57,7 +58,8 @@ class STRIKEProvider(generic.TorrentProvider):
                     seeders = ('seeds' in item and item['seeds']) or 0
                     leechers = ('leeches' in item and item['leeches']) or 0
                     title = ('torrent_title' in item and item['torrent_title']) or ''
-                    size = ('size' in item and item['size']) or 0
+                    torrent_size = ('size' in item and item['size'])
+                    size = convert_size(torrent_size) or -1
                     download_url = ('magnet_uri' in item and item['magnet_uri']) or ''
 
                     if not all([title, download_url]):
@@ -66,39 +68,22 @@ class STRIKEProvider(generic.TorrentProvider):
                     # Filter unseeded torrent
                     if seeders < self.minseed or leechers < self.minleech:
                         if mode != 'RSS':
-                            logger.log(u"Discarding torrent because it doesn't meet the minimum seeders or leechers: {0} (S:{1} L:{2})".format(title, seeders, leechers), logger.DEBUG)
+                            logger.log(u"Discarding torrent because it doesn't meet the minimum seeders or leechers: {} (S:{} L:{})".format
+                                       (title, seeders, leechers), logger.DEBUG)
                         continue
 
                     if mode != 'RSS':
-                        logger.log(u"Found result: %s " % title, logger.DEBUG)
+                        logger.log(u"Found result: %s with %s seeders and %s leechers" % (title, seeders, leechers), logger.DEBUG)
 
-                    item = title, download_url, size, seeders, leechers
-                    items[mode].append(item)
+                    item = {'title': title, 'link': download_url, 'size': size, 'seeders': seeders, 'leechers': leechers, 'hash': None}
+                    items.append(item)
 
             # For each search mode sort all the items by seeders if available
-            items[mode].sort(key=lambda tup: tup[3], reverse=True)
+            items.sort(key=lambda d: try_int(d.get('seeders', 0)), reverse=True)
 
-            results += items[mode]
+            results += items
 
         return results
 
 
-    def seedRatio(self):
-        return self.ratio
-
-
-class StrikeCache(tvcache.TVCache):
-    def __init__(self, provider_obj):
-
-        tvcache.TVCache.__init__(self, provider_obj)
-        
-        # Cache results for 10 min
-        self.minTime = 10
-
-    def _getRSSData(self):
-        
-        # Use this hacky way for RSS search since most results will use this codec       
-        search_params = {'RSS': ['x264']}
-        return {'entries': self.provider._doSearch(search_params)}
-
-provider = STRIKEProvider()
+provider = StrikeProvider()

@@ -12,14 +12,13 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=C0301
-# Line too long
+# pylint: disable=line-too-long
 
 """
 Create a test database for testing.
@@ -51,13 +50,12 @@ sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from configobj import ConfigObj
 from sickbeard import db, providers
 from sickbeard.databases import cache_db, failed_db, mainDB
+from sickbeard.providers.newznab import NewznabProvider
 from sickbeard.tv import TVEpisode
 import shutil_custom  # pylint: disable=import-error
 import sickbeard
 
-# pylint: disable=F0401
-# Unable to import
-
+# pylint: disable=import-error
 
 shutil.copyfile = shutil_custom.copyfile_custom
 
@@ -114,7 +112,7 @@ sickbeard.NAMING_MULTI_EP = 1
 
 
 sickbeard.PROVIDER_ORDER = ["sick_beard_index"]
-sickbeard.newznabProviderList = providers.getNewznabProviderList("'Sick Beard Index|http://lolo.sickbeard.com/|0|5030,5040|0|eponly|0|0|0!!!NZBs.org|https://nzbs.org/||5030,5040,5060,5070,5090|0|eponly|0|0|0!!!Usenet-Crawler|https://www.usenet-crawler.com/||5030,5040,5060|0|eponly|0|0|0'")
+sickbeard.newznabProviderList = NewznabProvider.get_providers_list("'Sick Beard Index|http://lolo.sickbeard.com/|0|5030,5040|0|eponly|0|0|0!!!NZBs.org|https://nzbs.org/||5030,5040,5060,5070,5090|0|eponly|0|0|0!!!Usenet-Crawler|https://www.usenet-crawler.com/||5030,5040,5060|0|eponly|0|0|0'")
 sickbeard.providerList = providers.makeProviderList()
 
 sickbeard.PROG_DIR = os.path.abspath(os.path.join(TEST_DIR, '..'))
@@ -128,15 +126,14 @@ sickbeard.GIT_USERNAME = sickbeard.config.check_setting_str(sickbeard.CFG, 'Gene
 sickbeard.GIT_PASSWORD = sickbeard.config.check_setting_str(sickbeard.CFG, 'General', 'git_password', '', censor_log=True)
 
 sickbeard.LOG_DIR = os.path.join(TEST_DIR, 'Logs')
-sickbeard.logger.logFile = os.path.join(sickbeard.LOG_DIR, 'test_sickbeard.log')
+sickbeard.logger.log_file = os.path.join(sickbeard.LOG_DIR, 'test_sickbeard.log')
 create_test_log_folder()
 
 sickbeard.CACHE_DIR = os.path.join(TEST_DIR, 'cache')
 create_test_cache_folder()
 
-# pylint: disable=E1103
-# Has no member
-sickbeard.logger.initLogging(False, True)
+# pylint: disable=no-member
+sickbeard.logger.init_logging(False, True)
 
 
 # =================
@@ -164,7 +161,7 @@ def _fake_specify_ep(self, season, episode):
     :param episode: Episode to search for  ...not used
     """
     _ = self, season, episode  # throw away unused variables
-    pass
+
 
 # the real one tries to contact TVDB just stop it from getting more info on the ep
 TVEpisode.specifyEpisode = _fake_specify_ep
@@ -208,8 +205,7 @@ class TestCacheDBConnection(TestDBConnection, object):
     Test connecting to the cache database.
     """
     def __init__(self, provider_name):
-        # pylint: disable=W0233
-        # Init method from non-direct base class
+        # pylint: disable=non-parent-init-called
         db.DBConnection.__init__(self, os.path.join(TEST_DIR, TEST_CACHE_DB_NAME))
 
         # Create the table if it's not already there
@@ -218,7 +214,7 @@ class TestCacheDBConnection(TestDBConnection, object):
                 sql = "CREATE TABLE [" + provider_name + "] (name TEXT, season NUMERIC, episodes TEXT, indexerid NUMERIC, url TEXT, time NUMERIC, quality TEXT, release_group TEXT)"
                 self.connection.execute(sql)
                 self.connection.commit()
-        # pylint: disable=W0703
+        # pylint: disable=broad-except
         # Catching too general exception
         except Exception as error:
             if str(error) != "table [" + provider_name + "] already exists":
@@ -233,7 +229,7 @@ class TestCacheDBConnection(TestDBConnection, object):
             sql = "CREATE TABLE lastUpdate (provider TEXT, time NUMERIC);"
             self.connection.execute(sql)
             self.connection.commit()
-        # pylint: disable=W0703
+        # pylint: disable=broad-except
         # Catching too general exception
         except Exception as error:
             if str(error) != "table lastUpdate already exists":
@@ -259,10 +255,10 @@ def setup_test_db():
     db.sanityCheckDatabase(db.DBConnection(), mainDB.MainSanityCheck)
 
     # and for cache.db too
-    db.upgradeDatabase(db.DBConnection("cache.db"), cache_db.InitialSchema)
+    db.upgradeDatabase(db.DBConnection('cache.db'), cache_db.InitialSchema)
 
     # and for failed.db too
-    db.upgradeDatabase(db.DBConnection("failed.db"), failed_db.InitialSchema)
+    db.upgradeDatabase(db.DBConnection('failed.db'), failed_db.InitialSchema)
 
 
 def teardown_test_db():
@@ -295,7 +291,7 @@ def setup_test_episode_file():
         with open(FILE_PATH, 'wb') as ep_file:
             ep_file.write("foo bar")
             ep_file.flush()
-    # pylint: disable=W0703
+    # pylint: disable=broad-except
     # Catching too general exception
     except Exception:
         print "Unable to set up test episode"
@@ -324,18 +320,3 @@ def teardown_test_show_dir():
     """
     if os.path.exists(SHOW_DIR):
         shutil.rmtree(SHOW_DIR)
-
-
-if __name__ == '__main__':
-    print "=================="
-    print "Don't call this directly"
-    print "=================="
-    print "you might want to call"
-
-    DIR_LIST = os.listdir(TEST_DIR)
-    for filename in DIR_LIST:
-        if (filename.find("_test") > 0) and (filename.find("pyc") < 0):
-            print "- " + filename
-
-    print "=================="
-    print "or just call all_tests.py"

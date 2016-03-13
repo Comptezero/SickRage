@@ -12,11 +12,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import cgi
@@ -24,6 +24,7 @@ import sickbeard
 
 from sickbeard import logger, common
 from sickrage.helper.encoding import ek
+
 
 def diagnose():
     """
@@ -47,19 +48,19 @@ def diagnose():
     else:
         try:
             bus = dbus.SessionBus()
-        except dbus.DBusException, e:
+        except dbus.DBusException as e:
             return (u"<p>Error: unable to connect to D-Bus session bus: <code>%s</code>."
                     u"<p>Are you running SickRage in a desktop session?") % (cgi.escape(e),)
         try:
             bus.get_object('org.freedesktop.Notifications',
                            '/org/freedesktop/Notifications')
-        except dbus.DBusException, e:
+        except dbus.DBusException as e:
             return (u"<p>Error: there doesn't seem to be a notification daemon available: <code>%s</code> "
                     u"<p>Try installing notification-daemon or notify-osd.") % (cgi.escape(e),)
     return u"<p>Error: Unable to send notification."
 
 
-class LibnotifyNotifier(object):
+class Notifier(object):
     def __init__(self):
         self.Notify = None
         self.gobject = None
@@ -102,6 +103,12 @@ class LibnotifyNotifier(object):
             title = common.notifyStrings[common.NOTIFY_GIT_UPDATE]
             self._notify(title, update_text + new_version)
 
+    def notify_login(self, ipaddress=""):
+        if sickbeard.USE_LIBNOTIFY:
+            update_text = common.notifyStrings[common.NOTIFY_LOGIN_TEXT]
+            title = common.notifyStrings[common.NOTIFY_LOGIN]
+            self._notify(title, update_text.format(ipaddress))
+
     def test_notify(self):
         return self._notify('Test notification', "This is a test notification from SickRage", force=True)
 
@@ -123,6 +130,3 @@ class LibnotifyNotifier(object):
             return n.show()
         except self.gobject.GError:
             return False
-
-
-notifier = LibnotifyNotifier

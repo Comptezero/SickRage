@@ -60,7 +60,7 @@
     <link rel="apple-touch-icon" sizes="72x72" href="${srRoot}/images/ico/favicon-72.png">
     <link rel="apple-touch-icon" href="${srRoot}/images/ico/favicon-57.png">
 
-    <link rel="stylesheet" type="text/css" href="${srRoot}/css/lib/bootstrap.min.css?${sbPID}"/>
+    <link rel="stylesheet" type="text/css" href="${srRoot}/css/vender.min.css?${sbPID}"/>
     <link rel="stylesheet" type="text/css" href="${srRoot}/css/browser.css?${sbPID}" />
     <link rel="stylesheet" type="text/css" href="${srRoot}/css/lib/jquery-ui-1.10.4.custom.min.css?${sbPID}" />
     <link rel="stylesheet" type="text/css" href="${srRoot}/css/style.css?${sbPID}"/>
@@ -209,10 +209,10 @@ var episodes = ${episodes};
                 <span class="glyphicon glyphicon-remove text-muted" title="No"></span>
             % endif
         </td>
-        <td>${parameter_help['desc'] if 'desc' in parameter_help else ''}</td>
-        <td>${parameter_help['type'] if 'type' in parameter_help else ''}</td>
-        <td>${parameter_help['defaultValue'] if 'defaultValue' in parameter_help else ''}</td>
-        <td>${parameter_help['allowed_values'] if 'allowed_values' in parameter_help else ''}</td>
+        <td>${parameter_help.get('desc', '')}</td>
+        <td>${parameter_help.get('type', '')}</td>
+        <td>${parameter_help.get('defaultValue', '')}</td>
+        <td>${parameter_help.get('allowedValues', '')}</td>
     </tr>
 % endfor
 </tbody>
@@ -223,8 +223,8 @@ var episodes = ${episodes};
     % for parameter in parameters:
     <%
         parameter_help = parameters[parameter]
-        allowed_values = parameter_help['allowed_values'] if 'allowed_values' in parameter_help else ''
-        type = parameter_help['type'] if 'type' in parameter_help else ''
+        allowed_values = parameter_help.get('allowedValues', '')
+        type = parameter_help.get('type', '')
     %>
 
     % if isinstance(allowed_values, list):
@@ -261,13 +261,7 @@ var episodes = ${episodes};
         </select>
         % endif
     % elif parameter == 'tvdbid':
-        <select class="form-control" name="${parameter}" data-command="${command}">
-            <option>${parameter}</option>
-
-            % for show in shows:
-            <option value="${show.indexerid}">${show.name}</option>
-            % endfor
-        </select>
+        <input class="form-control" name="${parameter}" placeholder="${parameter}" type="number" data-command="${command}" />
     % elif type == 'int':
         % if parameter not in ('episode', 'season'):
         <input class="form-control" name="${parameter}" placeholder="${parameter}" type="number" data-command="${command}" />

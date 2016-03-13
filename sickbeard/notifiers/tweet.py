@@ -12,11 +12,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import sickbeard
 
@@ -33,7 +33,7 @@ import oauth2 as oauth
 import pythontwitter as twitter
 
 
-class TwitterNotifier(object):
+class Notifier(object):
     consumer_key = "vHHtcB6WzpWDG6KYlBMr8g"
     consumer_secret = "zMqq5CB3f8cWKiRO2KzWPTlBanYmV0VYxSXZ0Pxds0E"
 
@@ -59,6 +59,12 @@ class TwitterNotifier(object):
             update_text = common.notifyStrings[common.NOTIFY_GIT_UPDATE_TEXT]
             title = common.notifyStrings[common.NOTIFY_GIT_UPDATE]
             self._notifyTwitter(title + " - " + update_text + new_version)
+
+    def notify_login(self, ipaddress=""):
+        if sickbeard.USE_TWITTER:
+            update_text = common.notifyStrings[common.NOTIFY_LOGIN_TEXT]
+            title = common.notifyStrings[common.NOTIFY_LOGIN]
+            self._notifyTwitter(title + " - " + update_text.format(ipaddress))
 
     def test_notify(self):
         return self._notifyTwitter("This is a test notification from SickRage", force=True)
@@ -130,7 +136,7 @@ class TwitterNotifier(object):
 
         try:
             api.PostUpdate(message.encode('utf8')[:139])
-        except Exception, e:
+        except Exception as e:
             logger.log(u"Error Sending Tweet: " + ex(e), logger.ERROR)
             return False
 
@@ -150,7 +156,7 @@ class TwitterNotifier(object):
 
         try:
             api.PostDirectMessage(dmdest, message.encode('utf8')[:139])
-        except Exception, e:
+        except Exception as e:
             logger.log(u"Error Sending Tweet (DM): " + ex(e), logger.ERROR)
             return False
 
@@ -166,5 +172,3 @@ class TwitterNotifier(object):
             return self._send_dm(prefix + ": " + message)
         else:
             return self._send_tweet(prefix + ": " + message)
-
-notifier = TwitterNotifier

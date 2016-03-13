@@ -1,3 +1,4 @@
+# coding=utf-8
 # Author: Nic Wolfe <nic@wolfeden.ca>
 # URL: http://code.google.com/p/sickbeard/
 #
@@ -10,13 +11,13 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
-
+import os
 import traceback
 
 import sickbeard
@@ -33,7 +34,11 @@ from sickbeard.blackandwhitelist import BlackAndWhiteList
 from sickrage.helper.exceptions import CantRefreshShowException, CantRemoveShowException, CantUpdateShowException
 from sickrage.helper.exceptions import EpisodeDeletedException, ex, MultipleShowObjectsException
 from sickrage.helper.exceptions import ShowDirectoryNotFoundException
+from sickbeard.helpers import get_showname_from_indexer
 from libtrakt import TraktAPI
+from sickrage.helper.encoding import ek
+from sickbeard.helpers import makeDir, chmodAsParent
+from sickrage.helper.common import sanitize_filename
 
 
 class ShowQueue(generic_queue.GenericQueue):
@@ -48,8 +53,7 @@ class ShowQueue(generic_queue.GenericQueue):
         return show.indexerid in [x.show.indexerid if x.show else 0 for x in self.queue if x.action_id in actions]
 
     def _isBeingSomethinged(self, show, actions):
-        return self.currentItem is not None and show == self.currentItem.show and \
-               self.currentItem.action_id in actions
+        return self.currentItem is not None and show == self.currentItem.show and self.currentItem.action_id in actions
 
     def isInUpdateQueue(self, show):
         return self._isInQueue(show, (ShowQueueActions.UPDATE, ShowQueueActions.FORCEUPDATE))
@@ -142,31 +146,39 @@ class ShowQueue(generic_queue.GenericQueue):
         return queueItemObj
 
     def addShow(self, indexer, indexer_id, showDir, default_status=None, quality=None, flatten_folders=None,
-                lang=None, subtitles=None, anime=None, scene=None, paused=None, blacklist=None, whitelist=None, default_status_after=None, archive=None):
+                lang=None, subtitles=None, anime=None, scene=None, paused=None, blacklist=None, whitelist=None,
+                default_status_after=None, root_dir=None):
 
         if lang is None:
             lang = sickbeard.INDEXER_DEFAULT_LANGUAGE
 
         queueItemObj = QueueItemAdd(indexer, indexer_id, showDir, default_status, quality, flatten_folders, lang,
-                                    subtitles, anime, scene, paused, blacklist, whitelist, default_status_after, archive)
+                                    subtitles, anime, scene, paused, blacklist, whitelist, default_status_after, root_dir)
 
         self.add_item(queueItemObj)
 
         return queueItemObj
 
     def removeShow(self, show, full=False):
+        if show is None:
+            raise CantRemoveShowException(u'Failed removing show: Show does not exist')
+
+        if not hasattr(show, u'indexerid'):
+            raise CantRemoveShowException(u'Failed removing show: Show does not have an indexer id')
+
         if self._isInQueue(show, (ShowQueueActions.REMOVE,)):
-            raise CantRemoveShowException("This show is already queued to be removed")
+            raise CantRemoveShowException(u'[{!s}]: Show is already queued to be removed'.format(show.indexerid))
 
         # remove other queued actions for this show.
-        for x in self.queue:
-            if show.indexerid == x.show.indexerid and x != self.currentItem:
-                self.queue.remove(x)
+        for item in self.queue:
+            if item and item.show and item != self.currentItem and show.indexerid == item.show.indexerid:
+                self.queue.remove(item)
 
-        queueItemObj = QueueItemRemove(show=show, full=full)
-        self.add_item(queueItemObj)
+        queue_item_obj = QueueItemRemove(show=show, full=full)
+        self.add_item(queue_item_obj)
 
-        return queueItemObj
+        return queue_item_obj
+
 
 class ShowQueueActions(object):
 
@@ -225,7 +237,7 @@ class ShowQueueItem(generic_queue.QueueItem):
 
 class QueueItemAdd(ShowQueueItem):
     def __init__(self, indexer, indexer_id, showDir, default_status, quality, flatten_folders, lang, subtitles, anime,
-                 scene, paused, blacklist, whitelist, default_status_after, archive):
+                 scene, paused, blacklist, whitelist, default_status_after, root_dir):
 
         self.indexer = indexer
         self.indexer_id = indexer_id
@@ -241,7 +253,7 @@ class QueueItemAdd(ShowQueueItem):
         self.blacklist = blacklist
         self.whitelist = whitelist
         self.default_status_after = default_status_after
-        self.archive = archive
+        self.root_dir = root_dir
 
         self.show = None
 
@@ -277,7 +289,7 @@ class QueueItemAdd(ShowQueueItem):
 
         ShowQueueItem.run(self)
 
-        logger.log(u"Starting to add show " + self.showDir)
+        logger.log(u"Starting to add show {0}".format("by ShowDir: {0}".format(self.showDir) if self.showDir else "by Indexer Id: {0}".format(self.indexer_id)))
         # make sure the Indexer IDs are valid
         try:
 
@@ -290,11 +302,27 @@ class QueueItemAdd(ShowQueueItem):
             t = sickbeard.indexerApi(self.indexer).indexer(**lINDEXER_API_PARMS)
             s = t[self.indexer_id]
 
+            # Let's try to create the show Dir if it's not provided. This way we force the show dir to build build using the
+            # Indexers provided series name
+            if not self.showDir and self.root_dir:
+                show_name = get_showname_from_indexer(self.indexer, self.indexer_id, self.lang)
+                if show_name:
+                    self.showDir = ek(os.path.join, self.root_dir, sanitize_filename(show_name))
+                    dir_exists = makeDir(self.showDir)
+                    if not dir_exists:
+                        logger.log(u"Unable to create the folder {0}, can't add the show".format(self.showDir))
+                        return
+
+                    chmodAsParent(self.showDir)
+                else:
+                    logger.log(u"Unable to get a show {0}, can't add the show".format(self.showDir))
+                    return
+
             # this usually only happens if they have an NFO in their show dir which gave us a Indexer ID that has no proper english version of the show
             if getattr(s, 'seriesname', None) is None:
-                logger.log(u"Show in " + self.showDir + " has no name on " + str(
-                    sickbeard.indexerApi(self.indexer).name) + ", probably the wrong language used to search with.",
-                           logger.ERROR)
+                logger.log(u"Show in {} has no name on {}, probably searched with the wrong language.".format
+                           (self.showDir, sickbeard.indexerApi(self.indexer).name), logger.ERROR)
+
                 ui.notifications.error("Unable to add show",
                                        "Show in " + self.showDir + " has no name on " + str(sickbeard.indexerApi(
                                            self.indexer).name) + ", probably the wrong language. Delete .nfo and add manually in the correct language.")
@@ -309,7 +337,7 @@ class QueueItemAdd(ShowQueueItem):
                                            self.indexer).name) + " but contains no season/episode data.")
                 self._finishEarly()
                 return
-        except Exception, e:
+        except Exception as e:
             logger.log(u"%s Error while loading information from indexer %s. Error: %r" % (self.indexer_id, sickbeard.indexerApi(self.indexer).name, ex(e)), logger.ERROR)
             # logger.log(u"Show name with ID %s doesn't exist on %s anymore. If you are using trakt, it will be removed from your TRAKT watchlist. If you are adding manually, try removing the nfo and adding again" %
             #            (self.indexer_id, sickbeard.indexerApi(self.indexer).name), logger.WARNING)
@@ -357,7 +385,6 @@ class QueueItemAdd(ShowQueueItem):
             self.show.flatten_folders = self.flatten_folders if self.flatten_folders is not None else sickbeard.FLATTEN_FOLDERS_DEFAULT
             self.show.anime = self.anime if self.anime is not None else sickbeard.ANIME_DEFAULT
             self.show.scene = self.scene if self.scene is not None else sickbeard.SCENE_DEFAULT
-            self.show.archive_firstmatch = self.archive if self.archive is not None else sickbeard.ARCHIVE_DEFAULT
             self.show.paused = self.paused if self.paused is not None else False
 
             # set up default new/missing episode status
@@ -379,7 +406,7 @@ class QueueItemAdd(ShowQueueItem):
             # if self.show.classification and "sports" in self.show.classification.lower():
             #     self.show.sports = 1
 
-        except sickbeard.indexer_exception, e:
+        except sickbeard.indexer_exception as e:
             logger.log(
                 u"Unable to add show due to an error with " + sickbeard.indexerApi(self.indexer).name + ": " + ex(e),
                 logger.ERROR)
@@ -399,7 +426,7 @@ class QueueItemAdd(ShowQueueItem):
             self._finishEarly()
             return
 
-        except Exception, e:
+        except Exception as e:
             logger.log(u"Error trying to add show: " + ex(e), logger.ERROR)
             logger.log(traceback.format_exc(), logger.DEBUG)
             self._finishEarly()
@@ -408,14 +435,14 @@ class QueueItemAdd(ShowQueueItem):
         logger.log(u"Retrieving show info from IMDb", logger.DEBUG)
         try:
             self.show.loadIMDbInfo()
-        except imdb_exceptions.IMDbError, e:
+        except imdb_exceptions.IMDbError as e:
             logger.log(u" Something wrong on IMDb api: " + ex(e), logger.WARNING)
-        except Exception, e:
+        except Exception as e:
             logger.log(u"Error loading IMDb info: " + ex(e), logger.ERROR)
 
         try:
             self.show.saveToDB()
-        except Exception, e:
+        except Exception as e:
             logger.log(u"Error saving the show to the database: " + ex(e), logger.ERROR)
             logger.log(traceback.format_exc(), logger.DEBUG)
             self._finishEarly()
@@ -426,18 +453,18 @@ class QueueItemAdd(ShowQueueItem):
 
         try:
             self.show.loadEpisodesFromIndexer()
-        except Exception, e:
+        except Exception as e:
             logger.log(
                 u"Error with " + sickbeard.indexerApi(self.show.indexer).name + ", not creating episode list: " + ex(e),
                 logger.ERROR)
             logger.log(traceback.format_exc(), logger.DEBUG)
 
         # update internal name cache
-        name_cache.buildNameCache()
+        name_cache.buildNameCache(self.show)
 
         try:
             self.show.loadEpisodesFromDir()
-        except Exception, e:
+        except Exception as e:
             logger.log(u"Error searching dir for episodes: " + ex(e), logger.ERROR)
             logger.log(traceback.format_exc(), logger.DEBUG)
 
@@ -490,7 +517,7 @@ class QueueItemRefresh(ShowQueueItem):
         ShowQueueItem.__init__(self, ShowQueueActions.REFRESH, show)
 
         # do refreshes first because they're quick
-        self.priority = generic_queue.QueuePriorities.NORMAL
+        self.priority = generic_queue.QueuePriorities.HIGH
 
         # force refresh certain items
         self.force = force
@@ -510,6 +537,7 @@ class QueueItemRefresh(ShowQueueItem):
         sickbeard.scene_numbering.xem_refresh(self.show.indexerid, self.show.indexer)
 
         self.finish()
+
 
 class QueueItemRename(ShowQueueItem):
     def __init__(self, show=None):
@@ -551,6 +579,7 @@ class QueueItemRename(ShowQueueItem):
 
         self.finish()
 
+
 class QueueItemSubtitle(ShowQueueItem):
     def __init__(self, show=None):
         ShowQueueItem.__init__(self, ShowQueueActions.SUBTITLE, show)
@@ -563,10 +592,12 @@ class QueueItemSubtitle(ShowQueueItem):
         self.show.download_subtitles()
         self.finish()
 
+
 class QueueItemUpdate(ShowQueueItem):
     def __init__(self, show=None):
         ShowQueueItem.__init__(self, ShowQueueActions.UPDATE, show)
         self.force = False
+        self.priority = generic_queue.QueuePriorities.HIGH
 
     def run(self):
 
@@ -577,11 +608,11 @@ class QueueItemUpdate(ShowQueueItem):
         logger.log(u"Retrieving show info from " + sickbeard.indexerApi(self.show.indexer).name + "", logger.DEBUG)
         try:
             self.show.loadFromIndexer(cache=not self.force)
-        except sickbeard.indexer_error, e:
+        except sickbeard.indexer_error as e:
             logger.log(u"Unable to contact " + sickbeard.indexerApi(self.show.indexer).name + ", aborting: " + ex(e),
                        logger.WARNING)
             return
-        except sickbeard.indexer_attributenotfound, e:
+        except sickbeard.indexer_attributenotfound as e:
             logger.log(u"Data retrieved from " + sickbeard.indexerApi(
                 self.show.indexer).name + " was incomplete, aborting: " + ex(e), logger.ERROR)
             return
@@ -589,16 +620,16 @@ class QueueItemUpdate(ShowQueueItem):
         logger.log(u"Retrieving show info from IMDb", logger.DEBUG)
         try:
             self.show.loadIMDbInfo()
-        except imdb_exceptions.IMDbError, e:
+        except imdb_exceptions.IMDbError as e:
             logger.log(u" Something wrong on IMDb api: " + ex(e), logger.WARNING)
-        except Exception, e:
+        except Exception as e:
             logger.log(u"Error loading IMDb info: " + ex(e), logger.ERROR)
             logger.log(traceback.format_exc(), logger.DEBUG)
 
         # have to save show before reading episodes from db
         try:
             self.show.saveToDB()
-        except Exception, e:
+        except Exception as e:
             logger.log(u"Error saving show info to the database: " + ex(e), logger.ERROR)
             logger.log(traceback.format_exc(), logger.DEBUG)
 
@@ -610,7 +641,7 @@ class QueueItemUpdate(ShowQueueItem):
         logger.log(u"Loading all episodes from " + sickbeard.indexerApi(self.show.indexer).name + "", logger.DEBUG)
         try:
             IndexerEpList = self.show.loadEpisodesFromIndexer(cache=not self.force)
-        except sickbeard.indexer_exception, e:
+        except sickbeard.indexer_exception as e:
             logger.log(u"Unable to get info from " + sickbeard.indexerApi(
                 self.show.indexer).name + ", the show info will not be refreshed: " + ex(e), logger.ERROR)
             IndexerEpList = None
@@ -642,7 +673,7 @@ class QueueItemUpdate(ShowQueueItem):
         # save show again, in case episodes have changed
         try:
             self.show.saveToDB()
-        except Exception, e:
+        except Exception as e:
             logger.log(u"Error saving show info to the database: " + ex(e), logger.ERROR)
             logger.log(traceback.format_exc(), logger.DEBUG)
 
@@ -656,6 +687,7 @@ class QueueItemForceUpdate(QueueItemUpdate):
     def __init__(self, show=None):
         ShowQueueItem.__init__(self, ShowQueueActions.FORCEUPDATE, show)
         self.force = True
+        self.priority = generic_queue.QueuePriorities.HIGH
 
 
 class QueueItemRemove(ShowQueueItem):

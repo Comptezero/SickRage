@@ -12,11 +12,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import httplib
 import urllib
@@ -26,8 +26,7 @@ import base64
 import time
 
 import sickbeard
-from sickbeard import logger
-from sickbeard import common
+from sickbeard import logger, common
 from sickrage.helper.exceptions import ex
 from sickrage.helper.encoding import ss
 
@@ -42,10 +41,9 @@ except ImportError:
     import simplejson as json
 
 
-class KODINotifier(object):
-    sr_logo_url = 'https://raw.githubusercontent.com/SickRage/SickRage/master/gui/slick/images/sickrage-shark-mascot.png'
+class Notifier(object):
 
-    def _get_kodi_version(self, host, username, password):
+    def _get_kodi_version(self, host, username, password, dest_app="KODI"):
         """Returns KODI JSON-RPC API version (odd # = dev, even # = stable)
 
         Sends a request to the KODI host using the JSON-RPC to determine if
@@ -77,7 +75,7 @@ class KODINotifier(object):
         socket.setdefaulttimeout(10)
 
         checkCommand = '{"jsonrpc":"2.0","method":"JSONRPC.Version","id":1}'
-        result = self._send_to_kodi_json(checkCommand, host, username, password)
+        result = self._send_to_kodi_json(checkCommand, host, username, password, dest_app)
 
         # revert back to default socket timeout
         socket.setdefaulttimeout(sickbeard.SOCKET_TIMEOUT)
@@ -87,14 +85,14 @@ class KODINotifier(object):
         else:
             # fallback to legacy HTTPAPI method
             testCommand = {'command': 'Help'}
-            request = self._send_to_kodi(testCommand, host, username, password)
+            request = self._send_to_kodi(testCommand, host, username, password, dest_app)
             if request:
                 # return a fake version number, so it uses the legacy method
                 return 1
             else:
                 return False
 
-    def _notify_kodi(self, message, title="SickRage", host=None, username=None, password=None, force=False):
+    def _notify_kodi(self, message, title="SickRage", host=None, username=None, password=None, force=False, dest_app="KODI"):  # pylint: disable=too-many-arguments
         """Internal wrapper for the notify_snatch and notify_download functions
 
         Detects JSON-RPC version then branches the logic for either the JSON-RPC or legacy HTTP API methods.
@@ -123,17 +121,17 @@ class KODINotifier(object):
 
         # suppress notifications if the notifier is disabled but the notify options are checked
         if not sickbeard.USE_KODI and not force:
-            logger.log(u"Notification for KODI not enabled, skipping this notification", logger.DEBUG)
+            logger.log(u"Notification for %s not enabled, skipping this notification" % dest_app, logger.DEBUG)
             return False
 
         result = ''
-        for curHost in [x.strip() for x in host.split(",")]:
-            logger.log(u"Sending KODI notification to '" + curHost + "' - " + message, logger.DEBUG)
+        for curHost in [x.strip() for x in host.split(",") if x.strip()]:
+            logger.log(u"Sending %s notification to '%s' - %s" % (dest_app, curHost, message), logger.DEBUG)
 
-            kodiapi = self._get_kodi_version(curHost, username, password)
+            kodiapi = self._get_kodi_version(curHost, username, password, dest_app)
             if kodiapi:
                 if kodiapi <= 4:
-                    logger.log(u"Detected KODI version <= 11, using KODI HTTP API", logger.DEBUG)
+                    logger.log(u"Detected %s version <= 11, using %s HTTP API" % (dest_app, dest_app), logger.DEBUG)
                     command = {'command': 'ExecBuiltIn',
                                'parameter': 'Notification(' + title.encode("utf-8") + ',' + message.encode(
                                    "utf-8") + ')'}
@@ -141,15 +139,15 @@ class KODINotifier(object):
                     if notifyResult:
                         result += curHost + ':' + str(notifyResult)
                 else:
-                    logger.log(u"Detected KODI version >= 12, using KODI JSON API", logger.DEBUG)
+                    logger.log(u"Detected %s version >= 12, using %s JSON API" % (dest_app, dest_app), logger.DEBUG)
                     command = '{"jsonrpc":"2.0","method":"GUI.ShowNotification","params":{"title":"%s","message":"%s", "image": "%s"},"id":1}' % (
-                        title.encode("utf-8"), message.encode("utf-8"), self.sr_logo_url)
-                    notifyResult = self._send_to_kodi_json(command, curHost, username, password)
-                    if notifyResult and notifyResult.get('result'):
+                        title.encode("utf-8"), message.encode("utf-8"), sickbeard.LOGO_URL)
+                    notifyResult = self._send_to_kodi_json(command, curHost, username, password, dest_app)
+                    if notifyResult and notifyResult.get('result'):  # pylint: disable=no-member
                         result += curHost + ':' + notifyResult["result"].decode(sickbeard.SYS_ENCODING)
             else:
                 if sickbeard.KODI_ALWAYS_ON or force:
-                    logger.log(u"Failed to detect KODI version for '" + curHost + "', check configuration and try again.", logger.WARNING)
+                    logger.log(u"Failed to detect %s version for '%s', check configuration and try again." % (dest_app, curHost), logger.WARNING)
                 result += curHost + ':False'
 
         return result
@@ -168,7 +166,7 @@ class KODINotifier(object):
 
         """
 
-        logger.log(u"Sending request to update library for KODI host: '" + host + "'", logger.DEBUG)
+        logger.log(u"Sending request to update library for KODI host: '%s'" % host, logger.DEBUG)
 
         kodiapi = self._get_kodi_version(host, sickbeard.KODI_USERNAME, sickbeard.KODI_PASSWORD)
         if kodiapi:
@@ -195,7 +193,8 @@ class KODINotifier(object):
     # Legacy HTTP API (pre KODI 12) methods
     ##############################################################################
 
-    def _send_to_kodi(self, command, host=None, username=None, password=None):
+    @staticmethod
+    def _send_to_kodi(command, host=None, username=None, password=None, dest_app="KODI"):  # pylint: disable=too-many-arguments
         """Handles communication to KODI servers via HTTP API
 
         Args:
@@ -216,7 +215,7 @@ class KODINotifier(object):
             password = sickbeard.KODI_PASSWORD
 
         if not host:
-            logger.log(u'No KODI host passed, aborting update', logger.WARNING)
+            logger.log(u'No %s host passed, aborting update' % dest_app, logger.WARNING)
             return False
 
         for key in command:
@@ -224,8 +223,9 @@ class KODINotifier(object):
                 command[key] = command[key].encode('utf-8')
 
         enc_command = urllib.urlencode(command)
-        logger.log(u"KODI encoded API command: " + enc_command, logger.DEBUG)
+        logger.log(u"%s encoded API command: %r" % (dest_app, enc_command), logger.DEBUG)
 
+        # url = 'http://%s/xbmcCmds/xbmcHttp/?%s' % (host, enc_command)  # maybe need for old plex?
         url = 'http://%s/kodiCmds/kodiHttp/?%s' % (host, enc_command)
         try:
             req = urllib2.Request(url)
@@ -234,27 +234,27 @@ class KODINotifier(object):
                 base64string = base64.encodestring('%s:%s' % (username, password))[:-1]
                 authheader = "Basic %s" % base64string
                 req.add_header("Authorization", authheader)
-                logger.log(u"Contacting KODI (with auth header) via url: " + ss(url), logger.DEBUG)
+                logger.log(u"Contacting %s (with auth header) via url: %s" % (dest_app, ss(url)), logger.DEBUG)
             else:
-                logger.log(u"Contacting KODI via url: " + ss(url), logger.DEBUG)
+                logger.log(u"Contacting %s via url: %s" % (dest_app, ss(url)), logger.DEBUG)
 
             try:
                 response = urllib2.urlopen(req)
             except (httplib.BadStatusLine, urllib2.URLError) as e:
-                logger.log(u"Couldn't contact KODI HTTP at %r : %r" % (url, ex(e)), logger.DEBUG)
+                logger.log(u"Couldn't contact %s HTTP at %r : %r" % (dest_app, url, ex(e)), logger.DEBUG)
                 return False
 
             result = response.read().decode(sickbeard.SYS_ENCODING)
             response.close()
 
-            logger.log(u"KODI HTTP response: " + result.replace('\n', ''), logger.DEBUG)
+            logger.log(u"%s HTTP response: %s" % (dest_app, result.replace('\n', '')), logger.DEBUG)
             return result
 
         except Exception as e:
-            logger.log(u"Couldn't contact KODI HTTP at %r : %r" % (url, ex(e)), logger.DEBUG)
+            logger.log(u"Couldn't contact %s HTTP at %r : %r" % (dest_app, url, ex(e)), logger.DEBUG)
             return False
 
-    def _update_library(self, host=None, showName=None):
+    def _update_library(self, host=None, showName=None):  # pylint: disable=too-many-locals, too-many-return-statements
         """Handles updating KODI host via HTTP API
 
         Attempts to update the KODI video library for a specific tv show if passed,
@@ -306,7 +306,7 @@ class KODINotifier(object):
             encSqlXML = urllib.quote(sqlXML, ':\\/<>')
             try:
                 et = etree.fromstring(encSqlXML)
-            except SyntaxError, e:
+            except SyntaxError as e:
                 logger.log(u"Unable to parse XML returned from KODI: " + ex(e), logger.ERROR)
                 return False
 
@@ -344,7 +344,8 @@ class KODINotifier(object):
     # JSON-RPC API (KODI 12+) methods
     ##############################################################################
 
-    def _send_to_kodi_json(self, command, host=None, username=None, password=None):
+    @staticmethod
+    def _send_to_kodi_json(command, host=None, username=None, password=None, dest_app="KODI"):
         """Handles communication to KODI servers via JSONRPC
 
         Args:
@@ -365,11 +366,11 @@ class KODINotifier(object):
             password = sickbeard.KODI_PASSWORD
 
         if not host:
-            logger.log(u'No KODI host passed, aborting update', logger.WARNING)
+            logger.log(u'No %s host passed, aborting update' % dest_app, logger.WARNING)
             return False
 
         command = command.encode('utf-8')
-        logger.log(u"KODI JSON command: " + command, logger.DEBUG)
+        logger.log(u"%s JSON command: %s" % (dest_app, command), logger.DEBUG)
 
         url = 'http://%s/jsonrpc' % host
         try:
@@ -380,33 +381,33 @@ class KODINotifier(object):
                 base64string = base64.encodestring('%s:%s' % (username, password))[:-1]
                 authheader = "Basic %s" % base64string
                 req.add_header("Authorization", authheader)
-                logger.log(u"Contacting KODI (with auth header) via url: " + ss(url), logger.DEBUG)
+                logger.log(u"Contacting %s (with auth header) via url: %s" % (dest_app, ss(url)), logger.DEBUG)
             else:
-                logger.log(u"Contacting KODI via url: " + ss(url), logger.DEBUG)
+                logger.log(u"Contacting %s via url: %s" % (dest_app, ss(url)), logger.DEBUG)
 
             try:
                 response = urllib2.urlopen(req)
-            except (httplib.BadStatusLine, urllib2.URLError), e:
+            except (httplib.BadStatusLine, urllib2.URLError) as e:
                 if sickbeard.KODI_ALWAYS_ON:
-                    logger.log(u"Error while trying to retrieve KODI API version for " + host + ": " + ex(e), logger.WARNING)
+                    logger.log(u"Error while trying to retrieve %s API version for %s: %r" % (dest_app, host, ex(e)), logger.WARNING)
                 return False
 
             # parse the json result
             try:
                 result = json.load(response)
                 response.close()
-                logger.log(u"KODI JSON response: " + str(result), logger.DEBUG)
+                logger.log(u"%s JSON response: %s" % (dest_app, result), logger.DEBUG)
                 return result  # need to return response for parsing
-            except ValueError, e:
+            except ValueError as e:
                 logger.log(u"Unable to decode JSON: " + str(response.read()), logger.WARNING)
                 return False
 
-        except IOError, e:
+        except IOError as e:
             if sickbeard.KODI_ALWAYS_ON:
-                logger.log(u"Warning: Couldn't contact KODI JSON API at " + ss(url) + " " + ex(e), logger.WARNING)
+                logger.log(u"Warning: Couldn't contact %s JSON API at %s: %r" % (dest_app, ss(url), ex(e)), logger.WARNING)
             return False
 
-    def _update_library_json(self, host=None, showName=None):
+    def _update_library_json(self, host=None, showName=None):  # pylint: disable=too-many-return-statements, too-many-branches
         """Handles updating KODI host via HTTP JSON-RPC
 
         Attempts to update the KODI video library for a specific tv show if passed,
@@ -436,7 +437,7 @@ class KODINotifier(object):
             logger.log(u"Updating library in KODI via JSON method for show " + showName, logger.DEBUG)
 
             # let's try letting kodi filter the shows
-            showsCommand = '{"jsonrpc":"2.0","method":"VideoLibrary.GetTVShows","params":{"filter":{"field":"title","operator":"is","value":"%s"},"properties":["title",]},"id":"SickRage"}'
+            showsCommand = '{"jsonrpc":"2.0","method":"VideoLibrary.GetTVShows","params":{"filter":{"field":"title","operator":"is","value":"%s"},"properties":["title"]},"id":"SickRage"}'
 
             # get tvshowid by showName
             showsResponse = self._send_to_kodi_json(showsCommand % showName, host)
@@ -472,7 +473,7 @@ class KODINotifier(object):
                 return False
 
             # lookup tv-show path if we don't already know it
-            if not len(path):
+            if not path:
                 pathCommand = '{"jsonrpc":"2.0","method":"VideoLibrary.GetTVShowDetails","params":{"tvshowid":%d, "properties": ["file"]},"id":1}' % tvshowid
                 pathResponse = self._send_to_kodi_json(pathCommand, host)
 
@@ -480,7 +481,7 @@ class KODINotifier(object):
 
             logger.log(u"Received Show: " + showName + " with ID: " + str(tvshowid) + " Path: " + path, logger.DEBUG)
 
-            if not len(path):
+            if not path:
                 logger.log(u"No valid path found for " + showName + " with ID: " + str(tvshowid) + " on " + host, logger.WARNING)
                 return False
 
@@ -531,6 +532,12 @@ class KODINotifier(object):
             title = common.notifyStrings[common.NOTIFY_GIT_UPDATE]
             self._notify_kodi(update_text + new_version, title)
 
+    def notify_login(self, ipaddress=""):
+        if sickbeard.USE_KODI:
+            update_text = common.notifyStrings[common.NOTIFY_LOGIN_TEXT]
+            title = common.notifyStrings[common.NOTIFY_LOGIN]
+            self._notify_kodi(update_text.format(ipaddress), title)
+
     def test_notify(self, host, username, password):
         return self._notify_kodi("Testing KODI notifications from SickRage", "Test Notification", host, username, password, force=True)
 
@@ -565,7 +572,7 @@ class KODINotifier(object):
                 else:
                     if sickbeard.KODI_ALWAYS_ON:
                         logger.log(u"Failed to detect KODI version for '" + host + "', check configuration and try again.", logger.WARNING)
-                    result = result + 1
+                    result += 1
 
             # needed for the 'update kodi' submenu command
             # as it only cares of the final result vs the individual ones
@@ -573,6 +580,3 @@ class KODINotifier(object):
                 return True
             else:
                 return False
-
-
-notifier = KODINotifier

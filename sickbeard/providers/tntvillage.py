@@ -1,6 +1,7 @@
 # coding=utf-8
 # Author: Giovanni Borri
 # Modified by gborri, https://github.com/gborri for TNTVillage
+# URL: https://sickrage.github.io
 #
 # This file is part of SickRage.
 #
@@ -11,23 +12,23 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 import re
 import traceback
-from sickbeard.common import Quality
-from sickbeard import logger
-from sickbeard import tvcache
-from sickbeard import db
 
-from sickbeard.providers import generic
+from sickbeard import db, logger, tvcache
 from sickbeard.bs4_parser import BS4Parser
+from sickbeard.common import Quality
 from sickbeard.name_parser.parser import NameParser, InvalidNameException, InvalidShowException
+
+from sickrage.helper.common import convert_size, try_int
 from sickrage.helper.exceptions import AuthException
+from sickrage.providers.torrent.TorrentProvider import TorrentProvider
 
 category_excluded = {'Sport': 22,
                      'Teatro': 23,
@@ -56,16 +57,16 @@ category_excluded = {'Sport': 22,
                      'Mobile': 37}
 
 
-class TNTVillageProvider(generic.TorrentProvider):
-    def __init__(self):
-        generic.TorrentProvider.__init__(self, "TNTVillage")
+class TNTVillageProvider(TorrentProvider):  # pylint: disable=too-many-instance-attributes
 
+    def __init__(self):
+
+        TorrentProvider.__init__(self, "TNTVillage")
 
         self._uid = None
         self._hash = None
         self.username = None
         self.password = None
-        self.ratio = None
         self.cat = None
         self.engrelease = None
         self.page = 10
@@ -102,31 +103,32 @@ class TNTVillageProvider(generic.TorrentProvider):
 
         self.url = self.urls['base_url']
 
-        self.cookies = None
-
         self.sub_string = ['sub', 'softsub']
 
         self.proper_strings = ['PROPER', 'REPACK']
 
         self.categories = "cat=29"
 
-        self.cache = TNTVillageCache(self)
+        self.cache = tvcache.TVCache(self, min_time=30)  # only poll TNTVillage every 30 minutes max
 
-    def _checkAuth(self):
+    def _check_auth(self):
 
         if not self.username or not self.password:
             raise AuthException("Your authentication credentials for " + self.name + " are missing, check your config.")
 
         return True
 
-    def _doLogin(self):
+    def login(self):
+        if len(self.session.cookies) >= 3:
+            if self.session.cookies.get('pass_hash', '') not in ('0', 0) and self.session.cookies.get('member_id') not in ('0', 0):
+                return True
 
         login_params = {'UserName': self.username,
                         'PassWord': self.password,
-                        'CookieDate': 0,
+                        'CookieDate': 1,
                         'submit': 'Connettiti al Forum'}
 
-        response = self.getURL(self.urls['login'], post_data=login_params, timeout=30)
+        response = self.get_url(self.urls['login'], post_data=login_params, returns='text')
         if not response:
             logger.log(u"Unable to connect to provider", logger.WARNING)
             return False
@@ -137,7 +139,8 @@ class TNTVillageProvider(generic.TorrentProvider):
 
         return True
 
-    def _reverseQuality(self, quality):
+    @staticmethod
+    def _reverseQuality(quality):
 
         quality_string = ''
 
@@ -162,7 +165,8 @@ class TNTVillageProvider(generic.TorrentProvider):
 
         return quality_string
 
-    def _episodeQuality(self, torrent_rows):
+    @staticmethod
+    def _episodeQuality(torrent_rows):  # pylint: disable=too-many-return-statements, too-many-branches
         """
             Return The quality from the scene episode HTML row.
         """
@@ -217,7 +221,7 @@ class TNTVillageProvider(generic.TorrentProvider):
     def _is_italian(self, torrent_rows):
 
         name = str(torrent_rows.find_all('td')[1].find('b').find('span'))
-        if not name or name is 'None':
+        if not name or name == 'None':
             return False
 
         subFound = italian = False
@@ -238,10 +242,11 @@ class TNTVillageProvider(generic.TorrentProvider):
 
         return italian
 
-    def _is_english(self, torrent_rows):
+    @staticmethod
+    def _is_english(torrent_rows):
 
         name = str(torrent_rows.find_all('td')[1].find('b').find('span'))
-        if not name or name is 'None':
+        if not name or name == 'None':
             return False
 
         english = False
@@ -251,39 +256,34 @@ class TNTVillageProvider(generic.TorrentProvider):
 
         return english
 
-    def _is_season_pack(self, name):
+    @staticmethod
+    def _is_season_pack(name):
 
         try:
-            myParser = NameParser(tryIndexers=True)
-            parse_result = myParser.parse(name)
-        except InvalidNameException:
-            logger.log(u"Unable to parse the filename %s into a valid episode" % name, logger.DEBUG)
-            return False
-        except InvalidShowException:
-            logger.log(u"Unable to parse the filename %s into a valid show" % name, logger.DEBUG)
+            parse_result = NameParser(tryIndexers=True).parse(name)
+        except (InvalidNameException, InvalidShowException) as error:
+            logger.log(u"{}".format(error), logger.DEBUG)
             return False
 
-        myDB = db.DBConnection()
+        main_db_con = db.DBConnection()
         sql_selection = "select count(*) as count from tv_episodes where showid = ? and season = ?"
-        episodes = myDB.select(sql_selection, [parse_result.show.indexerid, parse_result.season_number])
+        episodes = main_db_con.select(sql_selection, [parse_result.show.indexerid, parse_result.season_number])
         if int(episodes[0]['count']) == len(parse_result.episode_numbers):
             return True
 
-    def _doSearch(self, search_params, search_mode='eponly', epcount=0, age=0, epObj=None):
-
+    def search(self, search_params, age=0, ep_obj=None):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         results = []
-        items = {'Season': [], 'Episode': [], 'RSS': []}
+        if not self.login():
+            return results
 
         self.categories = "cat=" + str(self.cat)
 
-        if not self._doLogin():
-            return results
-
-        for mode in search_params.keys():
-            logger.log(u"Search Mode: %s" % mode, logger.DEBUG)
+        for mode in search_params:
+            items = []
+            logger.log(u"Search Mode: {}".format(mode), logger.DEBUG)
             for search_string in search_params[mode]:
 
-                if mode is 'RSS':
+                if mode == 'RSS':
                     self.page = 2
 
                 last_page = 0
@@ -300,21 +300,21 @@ class TNTVillageProvider(generic.TorrentProvider):
                         break
 
                     if mode != 'RSS':
-                        searchURL = (self.urls['search_page'] + '&filter={2}').format(z, self.categories, search_string)
+                        search_url = (self.urls['search_page'] + '&filter={2}').format(z, self.categories, search_string)
                     else:
-                        searchURL = self.urls['search_page'].format(z, self.categories)
+                        search_url = self.urls['search_page'].format(z, self.categories)
 
                     if mode != 'RSS':
-                        logger.log(u"Search string: %s " % search_string, logger.DEBUG)
+                        logger.log(u"Search string: {}".format
+                                   (search_string.decode("utf-8")), logger.DEBUG)
 
-                    logger.log(u"Search URL: %s" % searchURL, logger.DEBUG)
-                    data = self.getURL(searchURL)
+                    data = self.get_url(search_url, returns='text')
                     if not data:
                         logger.log(u"No data returned from provider", logger.DEBUG)
                         continue
 
                     try:
-                        with BS4Parser(data, features=["html5lib", "permissive"]) as html:
+                        with BS4Parser(data, 'html5lib') as html:
                             torrent_table = html.find('table', attrs={'class': 'copyright'})
                             torrent_rows = torrent_table.find_all('tr') if torrent_table else []
 
@@ -337,8 +337,8 @@ class TNTVillageProvider(generic.TorrentProvider):
                                     leechers = int(leechers.strip('[]'))
                                     seeders = result.find_all('td')[3].find_all('td')[2].text
                                     seeders = int(seeders.strip('[]'))
-                                    # FIXME
-                                    size = -1
+                                    torrent_size = result.find_all('td')[3].find_all('td')[3].text.strip('[]') + " GB"
+                                    size = convert_size(torrent_size) or -1
                                 except (AttributeError, TypeError):
                                     continue
 
@@ -379,40 +379,25 @@ class TNTVillageProvider(generic.TorrentProvider):
                                 # Filter unseeded torrent
                                 if seeders < self.minseed or leechers < self.minleech:
                                     if mode != 'RSS':
-                                        logger.log(u"Discarding torrent because it doesn't meet the minimum seeders or leechers: {0} (S:{1} L:{2})".format(title, seeders, leechers), logger.DEBUG)
+                                        logger.log(u"Discarding torrent because it doesn't meet the minimum seeders or leechers: {} (S:{} L:{})".format
+                                                   (title, seeders, leechers), logger.DEBUG)
                                     continue
 
-                                item = title, download_url, size, seeders, leechers
+                                item = {'title': title, 'link': download_url, 'size': size, 'seeders': seeders, 'leechers': leechers, 'hash': None}
                                 if mode != 'RSS':
-                                    logger.log(u"Found result: %s " % title, logger.DEBUG)
+                                    logger.log(u"Found result: %s with %s seeders and %s leechers" % (title, seeders, leechers), logger.DEBUG)
 
-                                items[mode].append(item)
+                                items.append(item)
 
                     except Exception:
                         logger.log(u"Failed parsing provider. Traceback: %s" % traceback.format_exc(), logger.ERROR)
 
                 # For each search mode sort all the items by seeders if available if available
-                items[mode].sort(key=lambda tup: tup[3], reverse=True)
+                items.sort(key=lambda d: try_int(d.get('seeders', 0)), reverse=True)
 
-                results += items[mode]
+                results += items
 
         return results
-
-    def seedRatio(self):
-        return self.ratio
-
-
-class TNTVillageCache(tvcache.TVCache):
-    def __init__(self, provider_obj):
-
-        tvcache.TVCache.__init__(self, provider_obj)
-
-        # only poll TNTVillage every 30 minutes max
-        self.minTime = 30
-
-    def _getRSSData(self):
-        search_params = {'RSS': []}
-        return {'entries': self.provider._doSearch(search_params)}
 
 
 provider = TNTVillageProvider()

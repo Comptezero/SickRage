@@ -1,6 +1,7 @@
+# coding=utf-8
 import re
 import os
-import requests
+import posixpath
 from bs4 import BeautifulSoup
 from datetime import date
 
@@ -23,18 +24,18 @@ class imdbPopular(object):
             'year': '%s,%s' % (date.today().year - 1, date.today().year + 1)
         }
 
-        self.session = requests.Session()
+        self.session = helpers.make_session()
 
     def fetch_popular_shows(self):
         """Get popular show information from IMDB"""
 
         popular_shows = []
 
-        data = helpers.getURL(self.url, session=self.session, params=self.params, headers={'Referer': 'http://akas.imdb.com/'})
+        data = helpers.getURL(self.url, session=self.session, params=self.params, headers={'Referer': 'http://akas.imdb.com/'}, returns='text')
         if not data:
             return None
 
-        soup = BeautifulSoup(data, 'html.parser')
+        soup = BeautifulSoup(data, 'html5lib')
         results = soup.find("table", {"class": "results"})
         rows = results.find_all("tr")
 
@@ -45,7 +46,7 @@ class imdbPopular(object):
             if image_td:
                 image = image_td.find("img")
                 show['image_url_large'] = self.change_size(image['src'], 3)
-                show['image_path'] = ek(os.path.join, 'images', 'imdb_popular', ek(os.path.basename, show['image_url_large']))
+                show['image_path'] = ek(posixpath.join, 'images', 'imdb_popular', ek(os.path.basename, show['image_url_large']))
 
                 self.cache_image(show['image_url_large'])
 
@@ -54,7 +55,7 @@ class imdbPopular(object):
             if td:
                 show['name'] = td.find("a").contents[0]
                 show['imdb_url'] = "http://www.imdb.com" + td.find("a")["href"]
-                show['imdb_tt'] =  show['imdb_url'][-10:][0:9]
+                show['imdb_tt'] = show['imdb_url'][-10:][0:9]
                 show['year'] = td.find("span", {"class": "year_type"}).contents[0].split(" ")[0][1:]
 
                 rating_all = td.find("div", {"class": "user_rating"})

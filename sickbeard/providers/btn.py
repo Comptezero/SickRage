@@ -1,6 +1,7 @@
 # coding=utf-8
 # Author: Daniel Heimans
-# URL: http://code.google.com/p/sickbeard
+#
+# URL: https://sickrage.github.io
 #
 # This file is part of SickRage.
 #
@@ -11,47 +12,46 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
-import time
-import socket
-import math
-import jsonrpclib
 from datetime import datetime
+import jsonrpclib
+import math
+import socket
+import time
 
 import sickbeard
-from sickbeard import logger
-from sickbeard import classes
-from sickbeard import tvcache
-from sickbeard import scene_exceptions
-from sickbeard.providers import generic
-from sickbeard.helpers import sanitizeSceneName
+from sickbeard import classes, logger, scene_exceptions, tvcache
 from sickbeard.common import cpu_presets
+from sickbeard.helpers import sanitizeSceneName
+
+from sickrage.helper.common import episode_num
 from sickrage.helper.exceptions import AuthException, ex
+from sickrage.providers.torrent.TorrentProvider import TorrentProvider
 
 
-class BTNProvider(generic.TorrentProvider):
+class BTNProvider(TorrentProvider):
+
     def __init__(self):
-        generic.TorrentProvider.__init__(self, "BTN")
 
+        TorrentProvider.__init__(self, "BTN")
 
-        self.supportsAbsoluteNumbering = True
+        self.supports_absolute_numbering = True
 
         self.api_key = None
-        self.ratio = None
 
-        self.cache = BTNCache(self)
+        self.cache = BTNCache(self, min_time=15)  # Only poll BTN every 15 minutes max
 
         self.urls = {'base_url': u'http://api.btnapps.net',
-                     'website': u'http://broadcasthe.net/',}
+                     'website': u'http://broadcasthe.net/', }
 
         self.url = self.urls['website']
 
-    def _checkAuth(self):
+    def _check_auth(self):
         if not self.api_key:
             logger.log(u"Invalid api key. Check your settings", logger.WARNING)
 
@@ -60,7 +60,7 @@ class BTNProvider(generic.TorrentProvider):
     def _checkAuthFromData(self, parsedJSON):
 
         if parsedJSON is None:
-            return self._checkAuth()
+            return self._check_auth()
 
         if 'api-error' in parsedJSON:
             logger.log(u"Incorrect authentication credentials: % s" % parsedJSON['api-error'], logger.DEBUG)
@@ -69,9 +69,9 @@ class BTNProvider(generic.TorrentProvider):
 
         return True
 
-    def _doSearch(self, search_params, search_mode='eponly', epcount=0, age=0, epObj=None):
+    def search(self, search_params, age=0, ep_obj=None):  # pylint:disable=too-many-locals
 
-        self._checkAuth()
+        self._check_auth()
 
         results = []
         params = {}
@@ -83,7 +83,7 @@ class BTNProvider(generic.TorrentProvider):
 
         if search_params:
             params.update(search_params)
-            logger.log(u"Search string: %s" %  search_params, logger.DEBUG)
+            logger.log(u"Search string: %s" % search_params, logger.DEBUG)
 
         parsedJSON = self._api_call(apikey, params)
         if not parsedJSON:
@@ -117,7 +117,7 @@ class BTNProvider(generic.TorrentProvider):
                     if 'torrents' in parsedJSON:
                         found_torrents.update(parsedJSON['torrents'])
 
-            for torrentid, torrent_info in found_torrents.iteritems():
+            for _, torrent_info in found_torrents.iteritems():
                 (title, url) = self._get_title_and_url(torrent_info)
 
                 if title and url:
@@ -127,13 +127,13 @@ class BTNProvider(generic.TorrentProvider):
         # FIXME SORT RESULTS
         return results
 
-    def _api_call(self, apikey, params={}, results_per_page=1000, offset=0):
+    def _api_call(self, apikey, params=None, results_per_page=1000, offset=0):
 
         server = jsonrpclib.Server(self.urls['base_url'])
         parsedJSON = {}
 
         try:
-            parsedJSON = server.getTorrents(apikey, params, int(results_per_page), int(offset))
+            parsedJSON = server.getTorrents(apikey, params or {}, int(results_per_page), int(offset))
             time.sleep(cpu_presets[sickbeard.CPU_PRESET])
 
         except jsonrpclib.jsonrpc.ProtocolError, error:
@@ -191,7 +191,7 @@ class BTNProvider(generic.TorrentProvider):
                 # unescaped / is valid in JSON, but it can be escaped
                 url = url.replace("\\/", "/")
 
-        return (title, url)
+        return title, url
 
     def _get_season_search_strings(self, ep_obj):
         search_params = []
@@ -239,7 +239,7 @@ class BTNProvider(generic.TorrentProvider):
             search_params['name'] = "%i" % int(ep_obj.scene_absolute_number)
         else:
             # Do a general name search for the episode, formatted like SXXEYY
-            search_params['name'] = "S%02dE%02d" % (ep_obj.scene_season, ep_obj.scene_episode)
+            search_params['name'] = u"{ep}".format(ep=episode_num(ep_obj.scene_season, ep_obj.scene_episode))
 
         # search
         if ep_obj.show.indexer == 1:
@@ -258,15 +258,15 @@ class BTNProvider(generic.TorrentProvider):
     def _doGeneralSearch(self, search_string):
         # 'search' looks as broad is it can find. Can contain episode overview and title for example,
         # use with caution!
-        return self._doSearch({'search': search_string})
+        return self.search({'search': search_string})
 
-    def findPropers(self, search_date=None):
+    def find_propers(self, search_date=None):
         results = []
 
         search_terms = ['%.proper.%', '%.repack.%']
 
         for term in search_terms:
-            for item in self._doSearch({'release': term}, age=4 * 24 * 60 * 60):
+            for item in self.search({'release': term}, age=4 * 24 * 60 * 60):
                 if item['Time']:
                     try:
                         result_date = datetime.fromtimestamp(float(item['Time']))
@@ -280,17 +280,8 @@ class BTNProvider(generic.TorrentProvider):
 
         return results
 
-    def seedRatio(self):
-        return self.ratio
-
 
 class BTNCache(tvcache.TVCache):
-    def __init__(self, provider_obj):
-        tvcache.TVCache.__init__(self, provider_obj)
-
-        # At least 15 minutes between queries
-        self.minTime = 15
-
     def _getRSSData(self):
         # Get the torrents uploaded since last check.
         seconds_since_last_update = math.ceil(time.time() - time.mktime(self._getLastUpdate().timetuple()))
@@ -307,7 +298,7 @@ class BTNCache(tvcache.TVCache):
                 logger.DEBUG)
             seconds_since_last_update = 86400
 
-        return {'entries': self.provider._doSearch(search_params=None, age=seconds_since_last_update)}
-
+        self.search_params = None  # BTN cache does not use search params
+        return {'entries': self.provider.search(search_params=self.search_params, age=seconds_since_last_update)}
 
 provider = BTNProvider()

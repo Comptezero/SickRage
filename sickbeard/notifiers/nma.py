@@ -6,7 +6,7 @@ from sickbeard import logger, common
 from pynma import pynma
 
 
-class NMA_Notifier(object):
+class Notifier(object):
     def test_notify(self, nma_api, nma_priority):
         return self._sendNMA(nma_api, nma_priority, event="Test", message="Testing NMA settings from SickRage",
                              force=True)
@@ -31,6 +31,12 @@ class NMA_Notifier(object):
             update_text = common.notifyStrings[common.NOTIFY_GIT_UPDATE_TEXT]
             title = common.notifyStrings[common.NOTIFY_GIT_UPDATE]
             self._sendNMA(nma_api=None, nma_priority=None, event=title, message=update_text + new_version)
+
+    def notify_login(self, ipaddress=""):
+        if sickbeard.USE_NMA:
+            update_text = common.notifyStrings[common.NOTIFY_LOGIN_TEXT]
+            title = common.notifyStrings[common.NOTIFY_LOGIN]
+            self._sendNMA(nma_api=None, nma_priority=None, event=title, message=update_text.format(ipaddress))
 
     def _sendNMA(self, nma_api=None, nma_priority=None, event=None, message=None, force=False):
 
@@ -63,6 +69,3 @@ class NMA_Notifier(object):
         else:
             logger.log(u"NMA: Notification sent to NotifyMyAndroid", logger.INFO)
             return True
-
-
-notifier = NMA_Notifier

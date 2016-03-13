@@ -12,11 +12,11 @@
 #
 # SickRage is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage.  If not, see <http://www.gnu.org/licenses/>.
+# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
 
 # pylint: disable=line-too-long
 
@@ -32,9 +32,9 @@ sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '../l
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from sickbeard.tv import TVEpisode, TVShow
-from sickbeard.providers.generic import GenericProvider
 import sickbeard
 import sickbeard.common as common
+from sickrage.providers.GenericProvider import GenericProvider
 import tests.test_lib as test
 
 TESTS = {
@@ -54,7 +54,7 @@ class SearchTest(test.SickbeardTestDBCase):
         super(SearchTest, self).__init__(something)
 
 
-def test_generator(cur_data, cur_name, cur_provider):
+def generator(cur_data, cur_name, cur_provider):
     """
     Generate test
 
@@ -64,7 +64,7 @@ def test_generator(cur_data, cur_name, cur_provider):
     :return:
     """
 
-    def do_test():
+    def do_test(self):
         """
         Test to perform
         """
@@ -117,7 +117,7 @@ def test_generator(cur_data, cur_name, cur_provider):
             if not cur_provider.public:
                 continue
 
-            items = cur_provider._doSearch(search_strings)  # pylint: disable=protected-access
+            items = cur_provider.search(search_strings)  # pylint: disable=protected-access
             if not items:
                 print "No results from cur_provider?"
                 continue
@@ -132,7 +132,7 @@ def test_generator(cur_data, cur_name, cur_provider):
                 print "url is empty"
                 continue
 
-            quality = cur_provider.getQuality(items[0])
+            quality = cur_provider.get_quality(items[0])
             size = cur_provider._get_size(items[0])  # pylint: disable=protected-access
 
             if not show.quality & quality:
@@ -152,12 +152,12 @@ if __name__ == '__main__':
             filename = name.replace(' ', '_')
 
             for provider in sickbeard.providers.sortedProviderList():
-                if provider.providerType == GenericProvider.TORRENT:
+                if provider.provider_type == GenericProvider.TORRENT:
                     if forceSearch:
                         test_name = 'test_manual_%s_%s_%s' % (filename, data["tvdbid"], provider.name)
                     else:
                         test_name = 'test_%s_%s_%s' % (filename, data["tvdbid"], provider.name)
-                    test = test_generator(data, name, provider)
+                    test = generator(data, name, provider)
                     setattr(SearchTest, test_name, test)
 
     SUITE = unittest.TestLoader().loadTestsFromTestCase(SearchTest)
