@@ -33,17 +33,11 @@ from lib.dateutil.parser import parse as parseDate
 class Nzbindex(generic.NZBProvider):
 
     def __init__(self):
-
         generic.NZBProvider.__init__(self, "Nzbindex")
-
         self.supportsBacklog = False
-
         self.enabled = False
-
         self.cache = NzbindexCache(self)
-
         self.urls = {'base_url': 'https://nzbindex.com/'}
-
         self.url = self.urls['base_url']
 
     def isEnabled(self):
